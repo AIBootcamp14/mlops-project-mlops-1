@@ -1,4 +1,4 @@
-# 워크플로우의 이름입니다. GitHub Actions UI에 표시됩니다.
+# 워크플로우의 이름입니다. GitHub Actions UI에 표시됩니다.(test.1)
 name: FastAPI CI/CD Pipeline
 
 # 워크플로우가 언제 트리거될지 정의합니다.
