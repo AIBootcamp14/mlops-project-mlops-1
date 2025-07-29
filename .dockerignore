@@ -1,0 +1,12 @@
+.git
+.gitignore
+.vscode
+.devcontainer
+__pycache__
+*.pyc
+*.ipynb_checkpoints
+.env
+venv/
+*.joblib
+data/
+notebooks/
