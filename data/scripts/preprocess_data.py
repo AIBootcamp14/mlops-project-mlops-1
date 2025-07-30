@@ -48,7 +48,7 @@ class SimpleDataPreprocessor:
         """데이터 로딩 - 노트북과 동일한 방식"""
         self.logger.info("데이터 로딩 시작")
         
-        data_path = 'data/raw/spam.csv'
+        data_path = 'data/spam.csv'
         
         # 인코딩 자동 감지 시도 (노트북과 동일)
         try:
