@@ -117,7 +117,7 @@ class WorkingFeatureExtractor:
         
         return combined_features, basic_features
     
-    def save_vectorizers(self, save_path='data/processed/vectorizers.pkl'):
+    def save_vectorizers(self, save_path='models/feature_extractor.joblib'):
         """벡터라이저 저장"""
         self.logger.info(f"벡터라이저 저장 중: {save_path}")
         
@@ -191,7 +191,7 @@ def main():
     print("  - data/processed/features/X_test_features.npy")
     print("  - data/processed/features/y_train.npy")
     print("  - data/processed/features/y_test.npy")
-    print("  - data/processed/vectorizers.pkl")
+    print("  -  models/feature_extractor.joblib")
     
     print("\n🔤 추출된 기본 특징:")
     for i, feature in enumerate(train_basic.columns, 1):
