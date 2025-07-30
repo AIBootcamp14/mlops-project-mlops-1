@@ -203,7 +203,7 @@ class DataValidator:
                 validation_report['overall_passed'] = False
             
             # 3. 원본 데이터와 비교 (전처리된 데이터인 경우)
-            raw_data_path = 'data/raw/spam.csv'
+            raw_data_path = 'data/spam.csv'
             if Path(raw_data_path).exists() and 'processed' in data_path:
                 try:
                     original_df = pd.read_csv(raw_data_path, encoding='latin-1')
