@@ -40,7 +40,7 @@ class SimpleDataPreprocessor:
     
     def setup_directories(self):
         """필요한 디렉토리 생성"""
-        directories = ['data/raw', 'data/processed', 'logs']
+        directories = ['data/processed', 'logs']
         for directory in directories:
             Path(directory).mkdir(parents=True, exist_ok=True)
     
