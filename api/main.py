@@ -50,18 +50,13 @@ async def load_model():
 # 텍스트 전처리 함수
 # 모델 학습 시 사용했던 전처리 로직과 동일해야 함
 def preprocess_text(text):
-    # 소문자 변환
-    text = text.lower()
-    # 구두점 제거
-    text = text.translate(str.maketrans('', '', string.punctuation))
-    # 숫자 제거
-    text = re.sub(r'\d+', '', text)
-    # 불용어 제거 및 어간 추출
-    words = text.split()
-    filtered_words = [
-        porter_stemmer.stem(word) for word in words if word not in stopwords.words('english')
-    ]
-    return ' '.join(filtered_words)
+    if not isinstance(text, str): # 문자열이 아니면 빈 문자열 반환 (model_training.py에 있던 조건)
+        return ""
+    text = text.lower() # 소문자 변환
+    text = re.sub(r'[^a-z]', ' ', text) # 알파벳 외 제거 (model_training.py에 있던 로직)
+    text = text.split() # 단어 분리
+    text = [porter_stemmer.stem(word) for word in text] # 어간 추출
+    return ' '.join(text)
 
 # API 요청 본문(Request Body)을 위한 Pydantic 모델 정의
 # 클라이언트로부터 받을 메시지 형식을 정의
