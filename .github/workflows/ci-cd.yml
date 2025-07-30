@@ -1,91 +1,54 @@
-# 워크플로우의 이름입니다. GitHub Actions UI에 표시됩니다.(test.1)
-name: FastAPI CI/CD Pipeline
+# 워크플로우의 이름입니다. GitHub Actions UI에 "CI/CD Pipeline"으로 표시됩니다.
+name: Model Training Pipeline
 
 # 워크플로우가 언제 트리거될지 정의합니다.
 on:
   push:
-    # main 브랜치에 코드가 푸시될 때 워크플로우를 실행합니다.
     branches:
-      - main
-    # api 폴더 내의 변경 사항이 있을 때만 워크플로우를 실행합니다.
-    # 이는 불필요한 빌드를 방지하여 리소스를 절약합니다.
+      - main # main 브랜치에 코드가 푸시될 때 워크플로우를 실행합니다.
     paths:
-      - 'api/**'
-      - 'requirements.txt' # requirements.txt 변경 시에도 빌드 필요
+      - 'notebooks/model_training.ipynb' # 노트북 파일 변경 시
+      - 'notebooks/train_model.py'      # 변환된 파이썬 스크립트 변경 시
+      - 'data/spam.csv'                 # 데이터 파일 변경 시
+      - 'requirements.txt'              # 필요한 라이브러리 변경 시
 
-  # Pull Request가 main 브랜치로 열리거나 업데이트될 때 워크플로우를 실행합니다.
-  pull_request:
-    branches:
-      - main
-    paths:
-      - 'api/**'
-      - 'requirements.txt'
+  workflow_dispatch: # GitHub Actions UI에서 수동으로 워크플로우를 실행할 수 있게 합니다.
 
 # 워크플로우를 구성하는 일련의 작업(jobs)들을 정의합니다.
 jobs:
-  # Docker 이미지 빌드 및 테스트 작업입니다.
-  build-and-test:
-    # 이 작업이 실행될 환경을 정의합니다. (Ubuntu 최신 버전)
-    runs-on: ubuntu-latest
+  train-and-test:
+    runs-on: ubuntu-latest # 이 작업이 실행될 환경을 정의합니다. (Ubuntu 최신 버전)
 
     # 작업의 단계(steps)들을 정의합니다.
     steps:
-      # 1. GitHub 저장소 코드를 워크플로우 환경으로 체크아웃합니다.
-      - name: 체크아웃 코드
-        uses: actions/checkout@v4
+    - name: Checkout code # 1. GitHub 저장소 코드를 워크플로우 환경으로 체크아웃합니다.
+      uses: actions/checkout@v3
 
-      # 2. Docker 빌드x(Buildx) 환경을 설정합니다.
-      # Buildx는 Docker 빌드 기능을 확장하여 멀티플랫폼 이미지 빌드 등을 가능하게 합니다.
-      - name: Docker Buildx 설정
-        uses: docker/setup-buildx-action@v3
+    - name: Set up Python # 2. Python 환경을 설정합니다.
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10' # 사용할 Python 버전 지정 (requirements.txt와 호환되는 버전)
 
-      # 3. Docker Hub에 로그인합니다.
-      # 이는 이미지를 Docker Hub로 푸시하기 위해 필요합니다.
-      # secrets.DOCKER_USERNAME과 secrets.DOCKER_PASSWORD는 GitHub 저장소 Secrets에 저장되어야 합니다.
-      - name: Docker Hub 로그인
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+    - name: Install dependencies # 3. requirements.txt에 명시된 라이브러리를 설치합니다.
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        # NLTK 데이터가 필요하면 여기서 다운로드합니다.
+        # (train_model.py에서 PorterStemmer를 사용하므로 필요할 수 있습니다.)
+        python -c "import nltk; nltk.download('punkt'); nltk.download('averaged_perceptron_tagger')"
 
-      # 4. Docker 이미지를 빌드하고 Docker Hub로 푸시합니다.
-      # api/Dockerfile을 사용하고, 프로젝트 루트(.)를 빌드 컨텍스트로 지정합니다.
-      # 이미지 태그는 spam-classifier-api:latest로 지정합니다.
-      - name: Docker 이미지 빌드 및 푸시
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: api/Dockerfile
-          push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/spam-classifier-api:latest # Docker Hub 사용자명/이미지이름:태그
 
-      # 5. (선택 사항) 컨테이너 실행 및 간단한 API 테스트
-      # 이는 실제 배포 전 컨테이너가 정상 작동하는지 확인하는 기본적인 테스트입니다.
-      - name: 컨테이너 실행 및 API 테스트
-        run: |
-          docker run -d -p 8000:8000 --name test-spam-api ${{ secrets.DOCKER_USERNAME }}/spam-classifier-api:latest
-          # 컨테이너가 완전히 시작될 때까지 잠시 기다립니다. (필요시 조정)
-          sleep 30
-          # 루트 엔드포인트 테스트
-          curl -f http://localhost:8000/
-          # 예측 엔드포인트 테스트 (스팸 메시지)
-          curl -X POST -H "Content-Type: application/json" -d '{"text": "Free money now!"}' http://localhost:8000/predict
-          # 예측 엔드포인트 테스트 (햄 메시지)
-          curl -X POST -H "Content-Type: application/json" -d '{"text": "Hello, how are you?"}' http://localhost:8000/predict
-        env:
-          # NLTK 데이터 경로를 컨테이너 내부에서 찾을 수 있도록 설정 (선택 사항, Dockerfile에서 처리했으면 필요 없을 수 있음)
-          # NLTK_DATA: /usr/local/share/nltk_data # Dockerfile에서 RUN 명령으로 다운로드하므로 이 부분은 필요 없을 가능성이 높음
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }} # Docker Hub 사용자명 환경 변수 (테스트 스텝에서 사용)
+    - name: Run Model Training and Evaluation # 4. 모델 학습 스크립트를 실행합니다.
+      run: |
+        # 모델 저장 폴더가 없으면 생성합니다.
+        mkdir -p models 
+        # notebooks 폴더에 있는 train_model.py 스크립트를 실행합니다.
+        python notebooks/train_model.py
 
-  # (선택 사항) 실제 배포 작업 (나중에 추가 가능)
-  # deploy:
-  #   needs: build-and-test # build-and-test 작업이 성공해야 실행됩니다.
-  #   runs-on: ubuntu-latest
-  #   environment: production # 배포 환경 지정 (GitHub Environments 설정 필요)
-  #   steps:
-  #     - name: 배포 스크립트 실행
-  #       run: |
-  #         echo "여기에 실제 배포 명령어를 작성합니다. (예: SSH로 서버 접속 후 Docker Compose 실행, Kubernetes 배포 등)"
-  #       env:
-  #         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  #         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    - name: Upload Model Artifacts # 5. 학습된 모델과 벡터라이저 파일을 GitHub Actions 아티팩트로 업로드합니다.
+      uses: actions/upload-artifact@v3
+      with:
+        name: spam-classifier-model # 아티팩트의 이름
+        path: | # 업로드할 파일의 경로
+          models/spam_classifier_model.joblib
+          models/tfidf_vectorizer.joblib
