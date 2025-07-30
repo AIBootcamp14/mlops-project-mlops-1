@@ -43,7 +43,7 @@ log_info "Python 버전: $python_version"
 
 # 2. 필요한 디렉토리 생성
 log_info "디렉토리 구조 생성 중..."
-mkdir -p data/raw
+mkdir -p data
 mkdir -p data/processed
 mkdir -p logs
 mkdir -p models
@@ -76,12 +76,12 @@ except LookupError:
 "
 
 # 5. 데이터 파일 확인
-if [ ! -f "data/raw/spam.csv" ]; then
-    log_warn "data/raw/spam.csv 파일이 없습니다."
+if [ ! -f "data/spam.csv" ]; then
+    log_warn "data/spam.csv 파일이 없습니다."
     log_info "샘플 데이터를 생성합니다..."
     
     # 간단한 샘플 데이터 생성
-    cat > data/raw/spam.csv << 'EOF'
+    cat > data/spam.csv << 'EOF'
 target,text
 ham,"Go until jurong point, crazy.. Available only in bugis n great world la e buffet... Cine there got amore wat..."
 spam,"Free entry in 2 a wkly comp to win FA Cup final tkts 21st May 2005. Text FA to 87121 to receive entry question(std txt rate)T&C's apply 08452810075over18's"
