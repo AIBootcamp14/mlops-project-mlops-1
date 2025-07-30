@@ -37,8 +37,8 @@ jobs:
         file: api/Dockerfile # api/Dockerfile을 사용하여 이미지 빌드
         push: true
         tags: |
-          rladud9689/spam-classifier-api:latest # 너의 Docker Hub 사용자 이름으로 변경
-          rladud9689/spam-classifier-api:${{ github.sha }} # 커밋 SHA를 태그로 사용하여 버전 관리
+          rladud9689/spam-classifier-api:latest
+          rladud9689/spam-classifier-api:${{ github.sha }}
         cache-from: type=gha # GitHub Actions 캐시를 사용하여 빌드 속도 향상
         cache-to: type=gha,mode=max
 
