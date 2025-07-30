@@ -1,170 +1,82 @@
 import pandas as pd
-import re
-from nltk.stem.porter import PorterStemmer
-from sklearn.model_selection import train_test_split
-from sklearn.feature_extraction.text import TfidfVectorizer
+import joblib
 from sklearn.naive_bayes import MultinomialNB
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score # 이 부분을 수정 또는 추가
-import joblib # 모델 저장/로드
-import matplotlib.pyplot as plt # 시각화
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay # 혼동 행렬
-
-
-
-# 데이터 로딩 및 초기 컬럼 처리
-
-#데이터셋 로드 (인코딩 자동 감지 시도)
-try:
-    df = pd.read_csv('../data/spam.csv', encoding='utf-8')
-except UnicodeDecodeError:
-    df = pd.read_csv('../data/spam.csv', encoding='latin-1')
-
-# 불필요한 컬럼 제거 및 필요한 컬럼만 유지
-if 'Unnamed: 0' in df.columns:
-    df = df[['target', 'text']].copy()
-else:
-    df = df[['target', 'text']].copy() # 'target', 'text' 컬럼만 가정
-
-# 데이터 미리보기 및 정보 확인
-display(df.head())
-display(df.info())
-
-
-
-
-# 타겟 값 매핑 및 결측치/타입 처리
-
-# 타겟 값 매핑 ('ham':0, 'spam':1)
-df['target'] = df['target'].map({'ham': 0, 'spam': 1}).fillna(df['target'])
-
-# 매핑 실패 또는 NaN 값 행 제거
-df.dropna(subset=['target'], inplace=True)
-
-# 타겟 컬럼 정수형으로 변환
-df['target'] = df['target'].astype(int)
-
-# 컬럼 확인
-display(df.columns)
-
-
-
-
-
-# 텍스트 전처리 함수 정의 및 적용
-
-# 어간 추출기 초기화
-stemmer = PorterStemmer()
-
-# 텍스트 전처리 함수
-def preprocess_text(text):
-    if not isinstance(text, str): # 문자열이 아니면 빈 문자열 반환
-        return ""
-    text = text.lower() # 소문자 변환
-    text = re.sub(r'[^a-z]', ' ', text) # 알파벳 외 제거
-    text = text.split() # 단어 분리
-    text = [stemmer.stem(word) for word in text] # 어간 추출
-    return ' '.join(text)
-
-# 전처리 함수 적용하여 새 컬럼 생성
-df['processed_text'] = df['text'].apply(preprocess_text)
-
-# 전처리된 데이터 미리보기
-display(df.head())
-
-
-
-
-
-
-# 데이터 분할 및 TF-IDF 벡터화
-
-# 필요한 컬럼만 복사
-df_processed = df[['target', 'processed_text']].copy()
-
-# 타겟 결측치 행 제거 (견고성을 위해 다시 포함)
-df_processed.dropna(subset=['target'], inplace=True)
-
-# 학습/테스트 데이터 분할 (75:25)
-X_train, X_test, y_train, y_test = train_test_split(df_processed['processed_text'], df_processed['target'], test_size=0.25, random_state=42)
-
-# TF-IDF 벡터라이저 초기화
-tfidf_vectorizer = TfidfVectorizer()
-
-# 학습 데이터에 TF-IDF 적용 및 변환
-X_train_tfidf = tfidf_vectorizer.fit_transform(X_train)
-
-# 테스트 데이터 변환
-X_test_tfidf = tfidf_vectorizer.transform(X_test)
-
-# 데이터셋 형태 출력
-print("X_train_tfidf 형태:", X_train_tfidf.shape)
-print("X_test_tfidf 형태:", X_test_tfidf.shape)
-print("y_train 형태:", y_train.shape)
-print("y_test 형태:", y_test.shape)
-
-
-
-
-
-
-
-# 모델 학습
-
-# Multinomial Naive Bayes 모델 초기화
-nb_model = MultinomialNB()
-
-# 모델 학습
-nb_model.fit(X_train_tfidf, y_train)
-
-print("모델 학습 완료!")
-
-
-
-
-
-
-
-
-# 모델 평가
-
-# 테스트 데이터 예측
-y_pred = nb_model.predict(X_test_tfidf)
-
-# 정확도 계산 및 출력
-accuracy = accuracy_score(y_test, y_pred)
-print(f"모델 정확도: {accuracy:.4f}")
-
-# 추가 평가 지표 계산 및 출력
-precision = precision_score(y_test, y_pred)
-recall = recall_score(y_test, y_pred)
-f1 = f1_score(y_test, y_pred)
-print(f"정밀도 (Precision): {precision:.4f}")
-print(f"재현율 (Recall): {recall:.4f}")
-print(f"F1 점수 (F1 Score): {f1:.4f}")
-
-# 혼동 행렬 시각화
-cm = confusion_matrix(y_test, y_pred)
-disp = ConfusionMatrixDisplay.from_predictions(y_test, y_pred, cmap='Blues')
-disp.ax_.set_title('혼동 행렬')
-plt.show()
-
-
-
-
-
-# 모델과 벡터라이저 저장
-
-# 학습된 모델 저장
-joblib.dump(nb_model, '../models/spam_classifier_model.joblib')
-
-# TF-IDF 벡터라이저 저장
-joblib.dump(tfidf_vectorizer, '../models/tfidf_vectorizer.joblib')
-print("모델과 TF-IDF 벡터라이저가 'models/' 폴더에 성공적으로 저장되었습니다.")
-
-
-
-
-
-
-
-
+from sklearn.metrics import accuracy_score, classification_report
+import os
+import sys
+
+
+# 예은님의 추가데이터로 트레인 모델 내용 변경
+
+# src/features/feature_extractor.py 모듈을 임포트하기 위한 경로 추가
+# 이 부분은 현재 스크립트의 위치에 따라 상대 경로를 조정해야 할 수 있어.
+# 여기서는 프로젝트 루트(MLOPS-PROJECT-MLOPS-1)에서 실행된다고 가정하고 경로를 추가
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src', 'features')))
+from feature_extractor import WorkingFeatureExtractor # WorkingFeatureExtractor 임포트
+
+# 모델과 추출기 저장 경로
+MODEL_DIR = 'models'
+os.makedirs(MODEL_DIR, exist_ok=True)
+
+def train_and_save_model():
+    # 1. 전처리된 데이터 로드 (팀원이 생성한 파일)
+    train_data_path = 'data/processed/train_data_latest.csv'
+    test_data_path = 'data/processed/test_data_latest.csv'
+
+    try:
+        train_df = pd.read_csv(train_data_path)
+        test_df = pd.read_csv(test_data_path)
+        print(f"훈련 데이터 로드 완료: {len(train_df)} 샘플")
+        print(f"테스트 데이터 로드 완료: {len(test_df)} 샘플")
+    except FileNotFoundError as e:
+        print(f"에러: 전처리된 데이터 파일을 찾을 수 없습니다. '{train_data_path}' 또는 '{test_data_path}' 경로를 확인하세요.")
+        print("데이터 전처리 파이프라인이 먼저 실행되어야 합니다.")
+        sys.exit(1)
+    except Exception as e:
+        print(f"데이터 로드 중 오류 발생: {e}")
+        sys.exit(1)
+
+    X_train_raw = train_df['text']
+    y_train = train_df['target']
+    X_test_raw = test_df['text']
+    y_test = test_df['target']
+
+    # 2. 특징 추출기 초기화 및 학습/변환
+    # feature_extractor.py에서 만든 특징 추출기를 사용
+    feature_extractor = WorkingFeatureExtractor()
+    
+    # 훈련 데이터로 특징 추출기 학습 및 변환
+    X_train_features = feature_extractor.fit_transform(X_train_raw)
+    
+    # 테스트 데이터 변환 (학습된 추출기 사용)
+    X_test_features = feature_extractor.transform(X_test_raw)
+
+    print(f"훈련 데이터 특징 추출 완료: {X_train_features.shape}")
+    print(f"테스트 데이터 특징 추출 완료: {X_test_features.shape}")
+
+    # 3. 모델 학습
+    print("모델 학습 시작...")
+    model = MultinomialNB()
+    model.fit(X_train_features, y_train)
+    print("모델 학습 완료.")
+
+    # 4. 모델 평가
+    y_pred = model.predict(X_test_features)
+    accuracy = accuracy_score(y_test, y_pred)
+    report = classification_report(y_test, y_pred, target_names=['ham', 'spam'])
+
+    print(f"\n모델 정확도: {accuracy:.4f}")
+    print("\n분류 리포트:")
+    print(report)
+
+    # 5. 모델과 특징 추출기 저장
+    try:
+        joblib.dump(model, os.path.join(MODEL_DIR, 'spam_classification_model.joblib'))
+        joblib.dump(feature_extractor, os.path.join(MODEL_DIR, 'feature_extractor.joblib')) # TF-IDF 대신 feature_extractor 저장
+        print(f"\n모델과 특징 추출기가 '{MODEL_DIR}' 폴더에 성공적으로 저장되었습니다.")
+    except Exception as e:
+        print(f"모델 또는 특징 추출기 저장 중 오류 발생: {e}")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    train_and_save_model()
