@@ -1,0 +1,41 @@
+# 워크플로우의 이름입니다. GitHub Actions UI에 표시됩니다.
+name: Docker CI
+
+# 이 워크플로우가 언제 실행될지 정의합니다.
+on:
+  push:
+    # 'main' 브랜치에 코드가 푸시될 때마다 이 워크플로우를 실행합니다.
+    branches:
+      - main
+  # pull_request:
+  #   branches:
+  #     - main
+
+# 워크플로우에서 실행될 작업(jobs)들을 정의합니다.
+jobs:
+  build-and-push:
+    # 이 작업이 실행될 환경을 정의합니다. 최신 Ubuntu 환경을 사용합니다.
+    runs-on: ubuntu-latest
+
+    # 작업에서 실행될 단계(steps)들을 정의합니다.
+    steps:
+      # 1. 저장소 코드를 체크아웃합니다. (GitHub Actions에서 기본으로 제공하는 액션)
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Docker Hub에 로그인합니다.
+      # GitHub Secrets에 저장된 사용자 이름과 접근 토큰을 사용합니다.
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }} # 이 부분을 수정했습니다!
+
+      # 3. Docker 이미지를 빌드하고 Docker Hub에 푸시합니다.
+      # 빌드 컨텍스트는 현재 디렉토리(.)이며, Dockerfile도 여기에 있다고 가정합니다.
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: rladud9689/spam-classifier-api:latest
