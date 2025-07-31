@@ -45,15 +45,21 @@ def train_model():
     # 1. 데이터 로드 (data/spam.csv 파일 직접 파싱)
     data = []
     try:
+        # csv.reader를 사용하여 각 줄을 읽고 수동으로 파싱
+        # delimiter와 quotechar를 명시하여 파싱 오류를 줄입니다.
         with open('data/spam.csv', 'r', encoding='latin-1') as file:
             reader = csv.reader(file, delimiter=';', quotechar='"') # 세미콜론 구분자, 따옴표 처리
             for i, row in enumerate(reader):
+                # 'v1'과 'v2' 컬럼에 해당하는 데이터만 추출
+                # 일반적으로 spam.csv 파일은 첫 번째 컬럼이 레이블, 두 번째 컬럼이 텍스트입니다.
                 if len(row) >= 2: # 최소한 두 개의 필드가 있는지 확인
                     label = row[0].strip()
                     text = row[1].strip()
                     # 레이블이 'ham' 또는 'spam'인지 확인
                     if label in ['ham', 'spam']:
                         data.append({'label': label, 'text': text})
+                    else:
+                        print(f"경고: 알 수 없는 레이블 '{label}'이(가) 포함된 줄이 건너뛰어졌습니다 (줄 {i+1}: {row})")
                 else:
                     print(f"경고: 유효하지 않은 형식의 줄이 건너뛰어졌습니다 (줄 {i+1}: {row})")
         df = pd.DataFrame(data)
