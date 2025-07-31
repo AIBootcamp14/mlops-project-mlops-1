@@ -40,8 +40,8 @@ def train_model():
     # 1. 데이터 로드 (data/spam.csv 파일 사용)
     # 현재 스크립트 위치에서 상대 경로로 data/spam.csv를 찾습니다.
     try:
-        # sep=';' 옵션을 추가하여 세미콜론을 구분자로 사용합니다.
-        df = pd.read_csv('data/spam.csv', encoding='latin-1', sep=';')
+        # sep=';', engine='python', quotechar='"' 옵션을 추가하여 파싱을 강화합니다.
+        df = pd.read_csv('data/spam.csv', encoding='latin-1', sep=';', engine='python', quotechar='"')
         print("데이터 로드 성공: data/spam.csv")
     except FileNotFoundError:
         print("에러: 'data/spam.csv' 파일을 찾을 수 없습니다. 경로를 확인하세요.")
