@@ -26,7 +26,7 @@ stemmer = PorterStemmer()
 def preprocess_text(text):
     # 입력이 문자열이 아닌 경우 빈 문자열로 변환하여 에러 방지
     if not isinstance(text, str):
-        text = str(text) # None이나 숫자가 들어올 경우 문자열로 변환
+        text = str(text)
 
     # 소문자 변환
     text = text.lower()
@@ -42,29 +42,39 @@ def preprocess_text(text):
 def train_model():
     print("모델 학습을 시작합니다.")
 
-    # 1. 데이터 로드 (data/spam.csv 파일 사용)
-    # 현재 스크립트 위치에서 상대 경로로 data/spam.csv를 찾습니다.
+    # 1. 데이터 로드 (data/spam.csv 파일 직접 파싱)
+    data = []
     try:
-        # sep=';' (세미콜론)을 구분자로 다시 사용하고, header=None, names=['label', 'text']로 컬럼을 명시합니다.
-        # on_bad_lines='skip'을 추가하여 파싱 오류가 있는 줄을 건너뛰도록 합니다.
-        df = pd.read_csv('data/spam.csv', encoding='latin-1', sep=';', header=None, names=['label', 'text'], on_bad_lines='skip', engine='python')
-        print("데이터 로드 성공: data/spam.csv")
+        with open('data/spam.csv', 'r', encoding='latin-1') as file:
+            reader = csv.reader(file, delimiter=';', quotechar='"') # 세미콜론 구분자, 따옴표 처리
+            for i, row in enumerate(reader):
+                if len(row) >= 2: # 최소한 두 개의 필드가 있는지 확인
+                    label = row[0].strip()
+                    text = row[1].strip()
+                    # 레이블이 'ham' 또는 'spam'인지 확인
+                    if label in ['ham', 'spam']:
+                        data.append({'label': label, 'text': text})
+                else:
+                    print(f"경고: 유효하지 않은 형식의 줄이 건너뛰어졌습니다 (줄 {i+1}: {row})")
+        df = pd.DataFrame(data)
+        print(f"데이터 로드 성공: data/spam.csv. 총 {len(df)}개의 유효한 행 로드됨.")
     except FileNotFoundError:
         print("에러: 'data/spam.csv' 파일을 찾을 수 없습니다. 경로를 확인하세요.")
+        exit(1)
+    except Exception as e:
+        print(f"데이터 로드 중 예상치 못한 오류 발생: {e}")
         exit(1)
 
     # 'spam'을 1, 'ham'을 0으로 인코딩
     df['label'] = df['label'].map({'ham': 0, 'spam': 1})
 
-    # 레이블 컬럼에 NaN이 있는 행 제거 (모델 학습 전 필수)
-    initial_rows = len(df)
-    df.dropna(subset=['label'], inplace=True)
-    rows_after_dropna = len(df)
-    if initial_rows != rows_after_dropna:
-        print(f"경고: 레이블 결측값으로 인해 {initial_rows - rows_after_dropna}개의 행이 제거되었습니다.")
-
-    # 텍스트 컬럼의 결측값을 빈 문자열로 채우기
+    # 텍스트 컬럼의 결측값을 빈 문자열로 채우기 (csv.reader로 읽으면 None이 있을 가능성은 낮지만 안전하게 유지)
     df['text'] = df['text'].fillna('')
+
+    # 데이터프레임이 비어있는지 확인
+    if df.empty:
+        print("에러: 유효한 데이터가 없어 모델을 학습할 수 없습니다. 데이터 파일을 확인하세요.")
+        exit(1)
 
     # 2. 텍스트 전처리 적용
     print("텍스트 전처리를 시작합니다.")
@@ -72,6 +82,11 @@ def train_model():
     print("텍스트 전처리 완료.")
 
     # 3. 데이터 분할 (훈련 세트와 테스트 세트)
+    # 데이터가 충분한지 다시 확인
+    if len(df) < 2: # 최소한 훈련/테스트로 나눌 수 있는 2개 이상의 샘플이 있어야 함
+        print(f"에러: 데이터 샘플 수가 너무 적어 훈련/테스트 분할을 할 수 없습니다. 현재 샘플 수: {len(df)}")
+        exit(1)
+
     X_train, X_test, y_train, y_test = train_test_split(
         df['processed_text'], df['label'], test_size=0.2, random_state=42
     )
@@ -98,7 +113,7 @@ def train_model():
     accuracy = accuracy_score(y_test, y_pred)
     precision = precision_score(y_test, y_pred)
     recall = recall_score(y_test, y_pred)
-    f1 = f1_score(y_test, y_pred) # 오타 수정: f1_score 함수 대신 y_pred 사용
+    f1 = f1_score(y_test, y_pred)
 
     print(f"정확도 (Accuracy): {accuracy:.4f}")
     print(f"정밀도 (Precision): {precision:.4f}")
