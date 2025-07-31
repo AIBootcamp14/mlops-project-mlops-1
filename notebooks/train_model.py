@@ -41,17 +41,13 @@ def train_model():
     # 1. 데이터 로드 (data/spam.csv 파일 사용)
     # 현재 스크립트 위치에서 상대 경로로 data/spam.csv를 찾습니다.
     try:
-        # sep='\t' (탭)을 구분자로 사용하고, header=None을 유지합니다.
-        # quoting 옵션은 제거하여 기본 동작을 따르도록 합니다.
-        df = pd.read_csv('data/spam.csv', encoding='latin-1', sep='\t', header=None)
+        # sep=';' (세미콜론)을 구분자로 다시 사용하고, header=None, names=['label', 'text']로 컬럼을 명시합니다.
+        # on_bad_lines='skip'을 추가하여 파싱 오류가 있는 줄을 건너뛰도록 합니다.
+        df = pd.read_csv('data/spam.csv', encoding='latin-1', sep=';', header=None, names=['label', 'text'], on_bad_lines='skip', engine='python')
         print("데이터 로드 성공: data/spam.csv")
     except FileNotFoundError:
         print("에러: 'data/spam.csv' 파일을 찾을 수 없습니다. 경로를 확인하세요.")
         exit(1)
-
-    # 필요한 컬럼만 선택하고 이름 변경 (header=None으로 읽었으므로, 원래 v1, v2에 해당하는 0, 1 인덱스 사용)
-    df = df[[0, 1]] # v1, v2 대신 0, 1 인덱스 사용
-    df.columns = ['label', 'text'] # 컬럼 이름 다시 지정
 
     # 'spam'을 1, 'ham'을 0으로 인코딩
     df['label'] = df['label'].map({'ham': 0, 'spam': 1})
