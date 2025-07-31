@@ -10,7 +10,8 @@ from feature_extractor import WorkingFeatureExtractor
 
 # 모델 및 특징 추출기 파일 경로 설정
 model_path = os.path.join(os.path.dirname(__file__), '..', 'models', 'spam_classification_model.joblib')
-extractor_path = os.path.join(os.path.dirname(__file__), '..', 'models', 'feature_extractor.joblib')
+# 여기를 수정했습니다: 'feature_extractor.joblib' -> 'tfidf_vectorizer.joblib'
+extractor_path = os.path.join(os.path.dirname(__file__), '..', 'models', 'tfidf_vectorizer.joblib')
 
 # 모델과 특징 추출기 로드
 model = None
