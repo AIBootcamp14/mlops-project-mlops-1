@@ -42,32 +42,11 @@ def preprocess_text(text):
 def train_model():
     print("모델 학습을 시작합니다.")
 
-    # 1. 데이터 로드 (data/spam.csv 파일 수동 파싱)
-    data = []
+    # 1. 데이터 로드 (data/spam.csv 파일 - pandas.read_csv로 재시도)
     try:
-        with open('data/spam.csv', 'r', encoding='latin-1') as file:
-            for i, line in enumerate(file):
-                line = line.strip() # 줄 끝의 공백 제거
-                if not line: # 빈 줄 건너뛰기
-                    continue
-
-                # 첫 번째 세미콜론 또는 탭을 기준으로 분리 시도
-                # spam.csv는 세미콜론 또는 탭으로 구분된 경우가 많습니다.
-                parts = line.split(';', 1) # 첫 번째 세미콜론 기준으로 최대 1번 분리
-                if len(parts) < 2:
-                    parts = line.split('\t', 1) # 세미콜론으로 분리 안 되면 탭으로 시도
-
-                if len(parts) >= 2:
-                    label = parts[0].strip()
-                    text = parts[1].strip()
-                    # 레이블이 'ham' 또는 'spam'인지 확인
-                    if label in ['ham', 'spam']:
-                        data.append({'label': label, 'text': text})
-                    else:
-                        print(f"경고: 알 수 없는 레이블 '{label}'이(가) 포함된 줄이 건너뛰어졌습니다 (줄 {i+1}: {line})")
-                else:
-                    print(f"경고: 유효하지 않은 형식의 줄이 건너뛰어졌습니다 (줄 {i+1}: {line})")
-        df = pd.DataFrame(data)
+        # sep=',' (쉼표)를 구분자로 사용하고, quotechar='"'로 따옴표를 명시합니다.
+        # header='infer' (기본값)로 첫 줄을 헤더로 인식하고, on_bad_lines='skip'으로 오류 줄 건너뛰기
+        df = pd.read_csv('data/spam.csv', encoding='latin-1', sep=',', quotechar='"', on_bad_lines='skip')
         print(f"데이터 로드 성공: data/spam.csv. 총 {len(df)}개의 유효한 행 로드됨.")
     except FileNotFoundError:
         print("에러: 'data/spam.csv' 파일을 찾을 수 없습니다. 경로를 확인하세요.")
@@ -76,8 +55,26 @@ def train_model():
         print(f"데이터 로드 중 예상치 못한 오류 발생: {e}")
         exit(1)
 
+    # 컬럼 이름이 'target'과 'text'인지 확인하고, 아니면 수동으로 지정
+    if 'target' not in df.columns or 'text' not in df.columns:
+        # 만약 컬럼 이름이 다르게 읽혔다면 (예: v1, v2), 수동으로 재지정
+        # spam.csv 파일의 첫 번째 컬럼이 레이블, 두 번째 컬럼이 텍스트라고 가정
+        if len(df.columns) >= 2:
+            df.columns = ['target', 'text'] + list(df.columns[2:]) # 나머지 컬럼은 그대로 유지
+            print("컬럼 이름이 'target', 'text'로 재지정되었습니다.")
+        else:
+            print("에러: 데이터 파일에서 'target' 또는 'text' 컬럼을 찾을 수 없습니다.")
+            exit(1)
+
     # 'spam'을 1, 'ham'을 0으로 인코딩
-    df['label'] = df['label'].map({'ham': 0, 'spam': 1})
+    df['target'] = df['target'].map({'ham': 0, 'spam': 1})
+
+    # 레이블 컬럼에 NaN이 있는 행 제거 (모델 학습 전 필수)
+    initial_rows = len(df)
+    df.dropna(subset=['target'], inplace=True)
+    rows_after_dropna = len(df)
+    if initial_rows != rows_after_dropna:
+        print(f"경고: 레이블 결측값으로 인해 {initial_rows - rows_after_dropna}개의 행이 제거되었습니다.")
 
     # 텍스트 컬럼의 결측값을 빈 문자열로 채우기
     df['text'] = df['text'].fillna('')
@@ -99,7 +96,7 @@ def train_model():
         exit(1)
 
     X_train, X_test, y_train, y_test = train_test_split(
-        df['processed_text'], df['label'], test_size=0.2, random_state=42
+        df['processed_text'], df['target'], test_size=0.2, random_state=42
     )
     print(f"훈련 데이터 크기: {len(X_train)}")
     print(f"테스트 데이터 크기: {len(X_test)}")
