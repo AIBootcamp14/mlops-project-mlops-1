@@ -1,4 +1,4 @@
-# 모델 학습 및 평가 파이프라인을 정의
+# 모델 학습 및 평가 파이프라인을 정의 (test1)
 
 # 워크플로우의 이름입니다. GitHub Actions UI에 "CI/CD Pipeline"으로 표시됩니다.
 name: Model Training Pipeline
