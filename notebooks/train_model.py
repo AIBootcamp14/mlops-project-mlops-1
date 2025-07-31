@@ -56,6 +56,13 @@ def train_model():
     # 'spam'을 1, 'ham'을 0으로 인코딩
     df['label'] = df['label'].map({'ham': 0, 'spam': 1})
 
+    # 레이블 컬럼에 NaN이 있는 행 제거 (모델 학습 전 필수)
+    initial_rows = len(df)
+    df.dropna(subset=['label'], inplace=True)
+    rows_after_dropna = len(df)
+    if initial_rows != rows_after_dropna:
+        print(f"경고: 레이블 결측값으로 인해 {initial_rows - rows_after_dropna}개의 행이 제거되었습니다.")
+
     # 텍스트 컬럼의 결측값을 빈 문자열로 채우기
     df['text'] = df['text'].fillna('')
 
@@ -91,7 +98,7 @@ def train_model():
     accuracy = accuracy_score(y_test, y_pred)
     precision = precision_score(y_test, y_pred)
     recall = recall_score(y_test, y_pred)
-    f1 = f1_score(y_test, y_pred)
+    f1 = f1_score(y_test, y_pred) # 오타 수정: f1_score 함수 대신 y_pred 사용
 
     print(f"정확도 (Accuracy): {accuracy:.4f}")
     print(f"정밀도 (Precision): {precision:.4f}")
