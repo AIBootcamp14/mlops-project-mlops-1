@@ -1,6 +1,6 @@
-# 모델 학습 및 평가 파이프라인을 정의 (test1)
+# 모델 학습 및 평가 파이프라인을 정의
 
-# 워크플로우의 이름입니다. GitHub Actions UI에 "CI/CD Pipeline"으로 표시됩니다.
+# 워크플로우의 이름입니다. GitHub Actions UI에 "Model Training Pipeline"으로 표시됩니다.
 name: Model Training Pipeline
 
 # 워크플로우가 언제 트리거될지 정의합니다.
@@ -10,9 +10,9 @@ on:
       - main # main 브랜치에 코드가 푸시될 때 워크플로우를 실행합니다.
     paths:
       - 'notebooks/model_training.ipynb' # 노트북 파일 변경 시
-      - 'notebooks/train_model.py'      # 변환된 파이썬 스크립트 변경 시
-      - 'data/spam.csv'                 # 데이터 파일 변경 시
-      - 'requirements.txt'              # 필요한 라이브러리 변경 시
+      - 'notebooks/train_model.py'        # 변환된 파이썬 스크립트 변경 시
+      - 'data/spam.csv'                   # 데이터 파일 변경 시
+      - 'requirements.txt'                # 필요한 라이브러리 변경 시
 
   workflow_dispatch: # GitHub Actions UI에서 수동으로 워크플로우를 실행할 수 있게 합니다.
 
@@ -43,12 +43,12 @@ jobs:
     - name: Run Model Training and Evaluation # 4. 모델 학습 스크립트를 실행합니다.
       run: |
         # 모델 저장 폴더가 없으면 생성합니다.
-        mkdir -p models 
+        mkdir -p models
         # notebooks 폴더에 있는 train_model.py 스크립트를 실행합니다.
         python notebooks/train_model.py
 
     - name: Upload Model Artifacts # 5. 학습된 모델과 벡터라이저 파일을 GitHub Actions 아티팩트로 업로드합니다.
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4 # v3에서 v4로 변경되었습니다!
       with:
         name: spam-classifier-model # 아티팩트의 이름
         path: | # 업로드할 파일의 경로
