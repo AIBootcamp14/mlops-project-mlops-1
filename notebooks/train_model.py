@@ -8,7 +8,7 @@ import joblib
 import nltk
 from nltk.stem import PorterStemmer
 import re
-import csv # csv 모듈 임포트
+# import csv # csv 모듈은 더 이상 직접 사용하지 않습니다.
 
 # NLTK 데이터 다운로드 (GitHub Actions 워크플로우에서 이미 다운로드하지만, 로컬 실행을 위해 포함)
 try:
@@ -42,26 +42,31 @@ def preprocess_text(text):
 def train_model():
     print("모델 학습을 시작합니다.")
 
-    # 1. 데이터 로드 (data/spam.csv 파일 직접 파싱)
+    # 1. 데이터 로드 (data/spam.csv 파일 수동 파싱)
     data = []
     try:
-        # csv.reader를 사용하여 각 줄을 읽고 수동으로 파싱
-        # delimiter와 quotechar를 명시하여 파싱 오류를 줄입니다.
         with open('data/spam.csv', 'r', encoding='latin-1') as file:
-            reader = csv.reader(file, delimiter=';', quotechar='"') # 세미콜론 구분자, 따옴표 처리
-            for i, row in enumerate(reader):
-                # 'v1'과 'v2' 컬럼에 해당하는 데이터만 추출
-                # 일반적으로 spam.csv 파일은 첫 번째 컬럼이 레이블, 두 번째 컬럼이 텍스트입니다.
-                if len(row) >= 2: # 최소한 두 개의 필드가 있는지 확인
-                    label = row[0].strip()
-                    text = row[1].strip()
+            for i, line in enumerate(file):
+                line = line.strip() # 줄 끝의 공백 제거
+                if not line: # 빈 줄 건너뛰기
+                    continue
+
+                # 첫 번째 세미콜론 또는 탭을 기준으로 분리 시도
+                # spam.csv는 세미콜론 또는 탭으로 구분된 경우가 많습니다.
+                parts = line.split(';', 1) # 첫 번째 세미콜론 기준으로 최대 1번 분리
+                if len(parts) < 2:
+                    parts = line.split('\t', 1) # 세미콜론으로 분리 안 되면 탭으로 시도
+
+                if len(parts) >= 2:
+                    label = parts[0].strip()
+                    text = parts[1].strip()
                     # 레이블이 'ham' 또는 'spam'인지 확인
                     if label in ['ham', 'spam']:
                         data.append({'label': label, 'text': text})
                     else:
-                        print(f"경고: 알 수 없는 레이블 '{label}'이(가) 포함된 줄이 건너뛰어졌습니다 (줄 {i+1}: {row})")
+                        print(f"경고: 알 수 없는 레이블 '{label}'이(가) 포함된 줄이 건너뛰어졌습니다 (줄 {i+1}: {line})")
                 else:
-                    print(f"경고: 유효하지 않은 형식의 줄이 건너뛰어졌습니다 (줄 {i+1}: {row})")
+                    print(f"경고: 유효하지 않은 형식의 줄이 건너뛰어졌습니다 (줄 {i+1}: {line})")
         df = pd.DataFrame(data)
         print(f"데이터 로드 성공: data/spam.csv. 총 {len(df)}개의 유효한 행 로드됨.")
     except FileNotFoundError:
@@ -74,7 +79,7 @@ def train_model():
     # 'spam'을 1, 'ham'을 0으로 인코딩
     df['label'] = df['label'].map({'ham': 0, 'spam': 1})
 
-    # 텍스트 컬럼의 결측값을 빈 문자열로 채우기 (csv.reader로 읽으면 None이 있을 가능성은 낮지만 안전하게 유지)
+    # 텍스트 컬럼의 결측값을 빈 문자열로 채우기
     df['text'] = df['text'].fillna('')
 
     # 데이터프레임이 비어있는지 확인
