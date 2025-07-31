@@ -8,7 +8,7 @@ import joblib
 import nltk
 from nltk.stem import PorterStemmer
 import re
-# import csv # csv 모듈은 더 이상 필요하지 않습니다.
+import csv # csv 모듈 임포트
 
 # NLTK 데이터 다운로드 (GitHub Actions 워크플로우에서 이미 다운로드하지만, 로컬 실행을 위해 포함)
 try:
@@ -24,6 +24,10 @@ except nltk.downloader.DownloadError:
 stemmer = PorterStemmer()
 
 def preprocess_text(text):
+    # 입력이 문자열이 아닌 경우 빈 문자열로 변환하여 에러 방지
+    if not isinstance(text, str):
+        text = str(text) # None이나 숫자가 들어올 경우 문자열로 변환
+
     # 소문자 변환
     text = text.lower()
     # 숫자 제거
@@ -51,6 +55,9 @@ def train_model():
 
     # 'spam'을 1, 'ham'을 0으로 인코딩
     df['label'] = df['label'].map({'ham': 0, 'spam': 1})
+
+    # 텍스트 컬럼의 결측값을 빈 문자열로 채우기
+    df['text'] = df['text'].fillna('')
 
     # 2. 텍스트 전처리 적용
     print("텍스트 전처리를 시작합니다.")
