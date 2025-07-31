@@ -27,7 +27,7 @@ jobs:
       # 'spam-classifier-model'은 ci-cd.yml에서 업로드한 아티팩트 이름과 동일해야 합니다.
       # 다운로드된 파일은 작업 공간의 'models' 폴더에 저장됩니다.
       - name: Download Model Artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4 # v3에서 v4로 변경되었습니다!
         with:
           name: spam-classifier-model # ci-cd.yml에서 업로드한 아티팩트 이름
           path: models/              # 다운로드할 경로 (Docker build context에 포함되도록)
