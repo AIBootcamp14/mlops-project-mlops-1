@@ -8,7 +8,7 @@ import joblib
 import nltk
 from nltk.stem import PorterStemmer
 import re
-import csv # csv 모듈 임포트
+# import csv # csv 모듈은 더 이상 필요하지 않습니다.
 
 # NLTK 데이터 다운로드 (GitHub Actions 워크플로우에서 이미 다운로드하지만, 로컬 실행을 위해 포함)
 try:
@@ -41,9 +41,9 @@ def train_model():
     # 1. 데이터 로드 (data/spam.csv 파일 사용)
     # 현재 스크립트 위치에서 상대 경로로 data/spam.csv를 찾습니다.
     try:
-        # sep=';', engine='python', quoting=csv.QUOTE_NONE, header=None 옵션을 추가합니다.
-        # header=None은 파일에 헤더가 없음을 명시하여 파싱 오류를 방지합니다.
-        df = pd.read_csv('data/spam.csv', encoding='latin-1', sep=';', engine='python', quoting=csv.QUOTE_NONE, header=None)
+        # sep='\t' (탭)을 구분자로 사용하고, header=None을 유지합니다.
+        # quoting 옵션은 제거하여 기본 동작을 따르도록 합니다.
+        df = pd.read_csv('data/spam.csv', encoding='latin-1', sep='\t', header=None)
         print("데이터 로드 성공: data/spam.csv")
     except FileNotFoundError:
         print("에러: 'data/spam.csv' 파일을 찾을 수 없습니다. 경로를 확인하세요.")
