@@ -4,7 +4,7 @@ import joblib
 import os
 import sys
 
-# src/features/feature_extractor.py 모듈 임포트 경로 추가
+# src/features/feature_extractor.py 머드워 임포트 경로 추가
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src', 'features')))
 from feature_extractor import WorkingFeatureExtractor
 
@@ -32,7 +32,7 @@ class PredictionRequest(BaseModel):
 
 @app.get("/")
 def read_root():
-    return {"message": "스팸 분류 API가 정상 작동 중입니다."}
+    return {"message": "스펜 분류 API가 정상 작동 중입니다."}
 
 @app.post("/predict")
 def predict_spam(request: PredictionRequest):
@@ -40,12 +40,12 @@ def predict_spam(request: PredictionRequest):
         return {"error": "모델 또는 특징 추출기가 로드되지 않았습니다. 관리자에게 문의하세요."}
 
     input_text = request.text
-    
-    # 특징 추출기 사용하여 텍스트 특징 변환
+
+    # 특징 추출기 사용에서 텍스트 특징 변환
     input_features = feature_extractor.transform([input_text]) 
-    
+
     prediction = model.predict(input_features)[0]
-    
+
     if prediction == 1:
         result = "스팸 (Spam)"
     else:
