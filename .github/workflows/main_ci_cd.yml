@@ -9,7 +9,7 @@ on:
       - 'src/**'
       - 'data/**'
       - 'requirements.txt'
-      - '.github/workflows/main_ci.yml'
+      - '.github/workflows/main_ci_cd.yml'
       - 'tests/**'
       - 'notebooks/**'
 
