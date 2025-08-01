@@ -48,8 +48,9 @@ jobs:
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          # 네 저장소의 시크릿 이름으로 수정했어.
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Download models from artifact
         uses: actions/download-artifact@v4
@@ -63,7 +64,7 @@ jobs:
           context: .
           file: Dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/spam-classifier:latest
+          tags: ${{ secrets.DOCKER_USERNAME }}/spam-classifier:latest
 
   deploy:
     needs: build-and-push
@@ -82,6 +83,6 @@ jobs:
             echo "Deployment started"
             sudo docker stop spam-api || true
             sudo docker rm spam-api || true
-            sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/spam-classifier:latest
-            sudo docker run -d --name spam-api -p 80:8000 ${{ secrets.DOCKERHUB_USERNAME }}/spam-classifier:latest
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/spam-classifier:latest
+            sudo docker run -d --name spam-api -p 80:8000 ${{ secrets.DOCKER_USERNAME }}/spam-classifier:latest
             echo "Deployment finished successfully!"
