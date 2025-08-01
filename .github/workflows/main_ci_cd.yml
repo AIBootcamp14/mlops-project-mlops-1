@@ -11,8 +11,7 @@ on:
       - 'requirements.txt'
       - '.github/workflows/main_ci.yml'
       - 'tests/**'
-      - 'notebooks/**' # test
-      
+      - 'notebooks/**'
 
 jobs:
   ci:
@@ -72,7 +71,7 @@ jobs:
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          key: ${{ secrets.EC2_SSH_KEY_ }}
           script: |
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/mlops-spam-classifier:latest
             sudo docker stop my-spam-app || true
