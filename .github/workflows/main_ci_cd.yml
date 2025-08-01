@@ -11,6 +11,8 @@ on:
       - 'requirements.txt'
       - '.github/workflows/main_ci.yml'
       - 'tests/**'
+      - 'notebooks/**'
+      
 
 jobs:
   ci:
