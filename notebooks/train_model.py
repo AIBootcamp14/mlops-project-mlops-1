@@ -134,7 +134,7 @@ def train_model():
     import os
     os.makedirs('models', exist_ok=True)
 
-    model_path = 'models/spam_classifier_model.joblib'
+    model_path = 'models/spam_classification_model.joblib'
     vectorizer_path = 'models/tfidf_vectorizer.joblib'
 
     joblib.dump(model, model_path)
