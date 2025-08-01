@@ -10,6 +10,7 @@ on:
       - 'data/**'
       - 'requirements.txt'
       - '.github/workflows/main_ci.yml'
+      - 'tests/**'
 
 jobs:
   ci:
