@@ -27,6 +27,7 @@ jobs:
       
       - name: Run Model Training
         run: python train_model.py
+        # train_model.py가 루트 디렉터리에 있으므로 이 경로는 정확함
 
       - name: Upload models as artifact
         uses: actions/upload-artifact@v4
