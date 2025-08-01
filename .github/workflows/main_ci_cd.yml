@@ -1,95 +1,83 @@
-# 워크플로우의 이름입니다. GitHub Actions UI에 표시됩니다.
 name: MLOps CI/CD Pipeline
 
-# 이 워크플로우가 언제 실행될지 정의합니다.
 on:
   push:
-    # 'main' 브랜치에 코드가 푸시될 때마다 이 워크플로우를 실행합니다.
     branches:
       - main
-    # 특정 파일 변경 시에만 워크플로우를 트리거하려면 아래 paths를 사용하세요.
-    # paths:
-    #   - 'notebooks/model_training.ipynb'
-    #   - 'notebooks/train_model.py'
-    #   - 'data/spam.csv'
-    #   - 'requirements.txt'
-    #   - 'main.py'
-    #   - 'Dockerfile'
-    #   - '.github/workflows/main_ci_cd.yml'
+    paths:
+      - '**.py'
+      - '**.yml'
 
-  workflow_dispatch: # GitHub Actions UI에서 수동으로 워크플로우를 실행할 수 있게 합니다.
-
-# 워크플로우에서 실행될 작업(jobs)들을 정의합니다.
 jobs:
-  # 모델 학습 및 Docker 이미지 빌드/푸시 작업을 포함하는 단일 작업
-  build-and-push:
-    runs-on: ubuntu-latest # 이 작업이 실행될 환경을 정의합니다. 최신 Ubuntu 환경을 사용합니다.
-
+  run-model-training:
+    runs-on: ubuntu-latest
     steps:
-      # 1. 저장소 코드를 체크아웃합니다.
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Python 환경을 설정합니다.
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.10' # 사용할 Python 버전 지정
+          python-version: "3.10"
 
-      # 3. 필요한 라이브러리를 설치합니다.
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          # NLTK 데이터 다운로드 (train_model.py에서 사용)
-          python -c "import nltk; nltk.download('punkt'); nltk.download('averaged_perceptron_tagger')"
+      
+      - name: Run Model Training
+        run: python train_model.py
 
-      # 4. 모델 학습 및 평가 스크립트를 실행합니다.
-      # 이 스텝에서 models/ 폴더에 모델과 벡터라이저 파일이 생성됩니다.
-      - name: Run Model Training and Evaluation
-        run: |
-          mkdir -p models # 모델 저장 폴더가 없으면 생성
-          python notebooks/train_model.py # 모델 학습 스크립트 실행
+      - name: Upload models as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: models
+          path: models/
 
-      # 5. Docker Hub에 로그인합니다.
-      - name: Login to Docker Hub
+  build-and-push:
+    needs: run-model-training
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 6. Docker 이미지를 빌드하고 Docker Hub에 푸시합니다.
-      # 이제 models/ 폴더에 방금 학습된 최신 모델이 포함됩니다.
+      - name: Download models from artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: models
+          path: models/
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: Dockerfile
           push: true
-          tags: rladud9689/spam-classifier-api:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/spam-classifier:latest
 
-  # EC2 배포 작업
   deploy:
-    needs: build-and-push # 'build-and-push' 작업이 성공적으로 완료된 후에 실행됩니다.
+    needs: build-and-push
     runs-on: ubuntu-latest
-
     steps:
-      # 1. SSH를 통해 EC2 인스턴스에 접속하고 Docker 명령어를 실행합니다.
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
       - name: Deploy to EC2
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
-          username: ubuntu
+          username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # 기존 컨테이너 중지 및 삭제
-            docker stop spam-api || true
-            docker rm spam-api || true
-
-            # 최신 Docker 이미지 가져오기
-            docker pull rladud9689/spam-classifier-api:latest
-
-            # 새로운 컨테이너 실행
-            docker run -d -p 80:8000 --name spam-api rladud9689/spam-classifier-api:latest
-
-            # 컨테이너 상태 확인 (선택 사항)
-            docker ps -a
+            echo "Deployment started"
+            sudo docker stop spam-api || true
+            sudo docker rm spam-api || true
+            sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/spam-classifier:latest
+            sudo docker run -d --name spam-api -p 80:8000 ${{ secrets.DOCKERHUB_USERNAME }}/spam-classifier:latest
+            echo "Deployment finished successfully!"
