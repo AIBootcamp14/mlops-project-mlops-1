@@ -36,7 +36,7 @@ jobs:
           python -m nltk.downloader averaged_perceptron_tagger
 
       - name: Run data preprocessing
-        run: python data/scripts/preprocess_data.py # 전처리 스크립트 실행
+        run: python data/scripts/preprocess_data.py # 전처리 스크립트 실행함
 
       - name: Run model training
         run: python notebooks/train_model.py # 모델 학습 스크립트 실행
