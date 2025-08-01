@@ -4,7 +4,7 @@ import pandas as pd
 import joblib
 from sklearn.metrics import accuracy_score
 
-# 테스트할 모델과 데이터 파일 경로
+# 테스트할 모델과 데이터 파일 경로 (test)
 MODEL_PATH = 'models/spam_classification_model.joblib'
 VECTORIZER_PATH = 'models/tfidf_vectorizer.joblib'
 TEST_DATA_PATH = 'data/processed/test_data_latest.csv'
