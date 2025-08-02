@@ -2,9 +2,8 @@ version: '3.8'
 
 services:
   spam-classifier-app:
-    image: ${{ secrets.DOCKER_USERNAME }}/mlops-spam-classifier:latest
+    image: rladud9689/mlops-spam-classifier:latest
     container_name: my-spam-app
     ports:
       - "8000:8000"
     restart: always
-    # test
