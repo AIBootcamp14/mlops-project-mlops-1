@@ -12,6 +12,7 @@ on:
       - '.github/workflows/main_ci_cd.yml'
       - 'tests/**'
       - 'notebooks/**'
+      - 'docker-compose.yml' # 이 부분을 추가했어
 
 jobs:
   ci:
@@ -59,7 +60,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/mlops-spam-classifier:latest
+          tags: rladud9689/mlops-spam-classifier:latest
           
   deploy:
     runs-on: ubuntu-latest
