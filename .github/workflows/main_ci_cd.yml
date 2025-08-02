@@ -73,8 +73,7 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY_ }}
           script: |
-            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/mlops-spam-classifier:latest
-            sudo docker stop my-spam-app || true
-            sudo docker rm my-spam-app || true
-            sudo docker run -d --name my-spam-app -p 8000:8000 ${{ secrets.DOCKER_USERNAME }}/mlops-spam-classifier:latest
+            sudo docker-compose -f docker-compose.yml pull
+            sudo docker-compose -f docker-compose.yml down || true
+            sudo docker-compose -f docker-compose.yml up -d
             sudo docker image prune -f
