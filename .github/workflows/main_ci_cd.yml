@@ -12,7 +12,7 @@ on:
       - '.github/workflows/main_ci_cd.yml'
       - 'tests/**'
       - 'notebooks/**'
-      - 'docker-compose.yml' # 이 부분을 추가했어
+      - 'docker-compose.yml'
 
 jobs:
   ci:
@@ -67,11 +67,6 @@ jobs:
     needs: ci # ci Job이 성공해야만 이 Job이 실행됨
     if: success()
     steps:
-      - name: Install Docker Compose
-        run: |
-          sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-          sudo chmod +x /usr/local/bin/docker-compose
-
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v0.1.5
         with:
@@ -79,6 +74,8 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY_ }}
           script: |
+            cd /home/ubuntu/mlops-project-mlops-1
+            git pull
             sudo docker-compose -f docker-compose.yml pull
             sudo docker-compose -f docker-compose.yml down || true
             sudo docker-compose -f docker-compose.yml up -d
