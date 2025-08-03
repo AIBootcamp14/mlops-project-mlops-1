@@ -7,4 +7,5 @@ services:
     ports:
       - "8000:8000"
     restart: always
-# CI/CD 워크플로우 재실행을 위한 변경
+    logging:
+      driver: "json-file"
