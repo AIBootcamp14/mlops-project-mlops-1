@@ -8,7 +8,7 @@ import joblib
 import nltk
 from nltk.stem import PorterStemmer
 import re
-# import csv # csv 모듈은 더 이상 직접 사용하지 않습니다.
+import os # os 모듈 추가
 
 # NLTK 데이터 다운로드 (GitHub Actions 워크플로우에서 이미 다운로드하지만, 로컬 실행을 위해 포함)
 try:
@@ -42,9 +42,8 @@ def preprocess_text(text):
 def train_model():
     print("모델 학습을 시작합니다.")
 
-    # 1. 데이터 로드 (data/spam.csv 파일)
+    # 1. 원본 데이터 로드 (data/spam.csv 파일)
     try:
-        # 데이터 파일 경로를 'data/spam.csv'로 되돌려야 함
         df = pd.read_csv('data/spam.csv', encoding='latin-1', sep=',', quotechar='"', on_bad_lines='skip')
         print(f"데이터 로드 성공: data/spam.csv. 총 {len(df)}개의 유효한 행 로드됨.")
     except FileNotFoundError:
@@ -81,12 +80,33 @@ def train_model():
         print("에러: 유효한 데이터가 없어 모델을 학습할 수 없습니다. 데이터 파일을 확인하세요.")
         exit(1)
 
-    # 2. 텍스트 전처리 적용
+    # 2. 새로운 데이터가 있는지 확인하고, 있다면 합치기 (새로운 기능)
+    new_data_path = 'data/new_data/new_spam_data.csv'
+    if os.path.exists(new_data_path):
+        print("새로운 데이터 파일을 발견했습니다. 기존 데이터와 합칩니다.")
+        try:
+            new_df = pd.read_csv(new_data_path, encoding='utf-8', on_bad_lines='skip')
+            
+            # 새로운 데이터프레임 컬럼 이름 확인 및 조정
+            if 'target' not in new_df.columns or 'text' not in new_df.columns:
+                 if len(new_df.columns) >= 2:
+                    new_df.columns = ['text', 'target'] + list(new_df.columns[2:])
+            
+            # 기존 데이터와 새로운 데이터를 합치기
+            df = pd.concat([df, new_df], ignore_index=True)
+            print(f"데이터 합치기 완료. 총 데이터 크기: {len(df)}")
+        except Exception as e:
+            print(f"경고: 새로운 데이터 파일 로드 중 오류 발생 - {e}")
+    else:
+        print("새로운 데이터 파일이 없습니다. 기존 데이터로 학습합니다.")
+
+
+    # 3. 텍스트 전처리 적용
     print("텍스트 전처리를 시작합니다.")
     df['processed_text'] = df['text'].apply(preprocess_text)
     print("텍스트 전처리 완료.")
 
-    # 3. 데이터 분할 (훈련 세트와 테스트 세트)
+    # 4. 데이터 분할 (훈련 세트와 테스트 세트)
     if len(df) < 2:
         print(f"에러: 데이터 샘플 수가 너무 적어 훈련/테스트 분할을 할 수 없습니다. 현재 샘플 수: {len(df)}")
         exit(1)
@@ -97,20 +117,20 @@ def train_model():
     print(f"훈련 데이터 크기: {len(X_train)}")
     print(f"테스트 데이터 크기: {len(X_test)}")
 
-    # 4. TF-IDF 벡터라이저 학습 및 변환
+    # 5. TF-IDF 벡터라이저 학습 및 변환
     print("TF-IDF 벡터라이저 학습을 시작합니다.")
     tfidf_vectorizer = TfidfVectorizer(max_features=5000)
     X_train_tfidf = tfidf_vectorizer.fit_transform(X_train)
     X_test_tfidf = tfidf_vectorizer.transform(X_test)
     print("TF-IDF 벡터라이저 학습 및 변환 완료.")
 
-    # 5. 모델 학습 (나이브 베이즈)
+    # 6. 모델 학습 (나이브 베이즈)
     print("모델 학습을 시작합니다 (나이브 베이즈).")
     model = MultinomialNB()
     model.fit(X_train_tfidf, y_train)
     print("모델 학습 완료.")
 
-    # 6. 모델 평가
+    # 7. 모델 평가
     print("모델 평가를 시작합니다.")
     y_pred = model.predict(X_test_tfidf)
 
@@ -125,12 +145,11 @@ def train_model():
     print(f"F1 점수 (F1 Score): {f1:.4f}")
     print("모델 평가 완료.")
 
-    # 7. 모델과 벡터라이저 저장
-    import os
-    os.makedirs('models', exist_ok=True)  # 이 부분을 'models'로 수정
+    # 8. 모델과 벡터라이저 저장
+    os.makedirs('models', exist_ok=True)
 
-    model_path = 'models/spam_classification_model.joblib'  # 이 부분을 'models'로 수정
-    vectorizer_path = 'models/tfidf_vectorizer.joblib'  # 이 부분을 'models'로 수정
+    model_path = 'models/spam_classification_model.joblib'
+    vectorizer_path = 'models/tfidf_vectorizer.joblib'
 
     joblib.dump(model, model_path)
     joblib.dump(tfidf_vectorizer, vectorizer_path)
