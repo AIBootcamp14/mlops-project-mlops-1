@@ -34,7 +34,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: models
-          path: models  # 'paths'를 'path'로 수정
+          path: models
 
   deploy:
     runs-on: ubuntu-latest
@@ -48,7 +48,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: models
-          path: .
+          path: models  # 'path: .'를 'path: models'로 수정
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
