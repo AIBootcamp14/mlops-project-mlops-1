@@ -44,12 +44,11 @@ def train_model():
 
     # 1. 데이터 로드 (data/spam.csv 파일 - pandas.read_csv로 재시도)
     try:
-        # sep=',' (쉼표)를 구분자로 사용하고, quotechar='"'로 따옴표를 명시합니다.
-        # header='infer' (기본값)로 첫 줄을 헤더로 인식하고, on_bad_lines='skip'으로 오류 줄 건너뛰기
-        df = pd.read_csv('data/spam.csv', encoding='latin-1', sep=',', quotechar='"', on_bad_lines='skip')
-        print(f"데이터 로드 성공: data/spam.csv. 총 {len(df)}개의 유효한 행 로드됨.")
+        # data/spam.csv 파일 경로 수정
+        df = pd.read_csv('../data/spam.csv', encoding='latin-1', sep=',', quotechar='"', on_bad_lines='skip')
+        print(f"데이터 로드 성공: ../data/spam.csv. 총 {len(df)}개의 유효한 행 로드됨.")
     except FileNotFoundError:
-        print("에러: 'data/spam.csv' 파일을 찾을 수 없습니다. 경로를 확인하세요.")
+        print("에러: '../data/spam.csv' 파일을 찾을 수 없습니다. 경로를 확인하세요.")
         exit(1)
     except Exception as e:
         print(f"데이터 로드 중 예상치 못한 오류 발생: {e}")
@@ -57,10 +56,8 @@ def train_model():
 
     # 컬럼 이름이 'target'과 'text'인지 확인하고, 아니면 수동으로 지정
     if 'target' not in df.columns or 'text' not in df.columns:
-        # 만약 컬럼 이름이 다르게 읽혔다면 (예: v1, v2), 수동으로 재지정
-        # spam.csv 파일의 첫 번째 컬럼이 레이블, 두 번째 컬럼이 텍스트라고 가정
         if len(df.columns) >= 2:
-            df.columns = ['target', 'text'] + list(df.columns[2:]) # 나머지 컬럼은 그대로 유지
+            df.columns = ['target', 'text'] + list(df.columns[2:])
             print("컬럼 이름이 'target', 'text'로 재지정되었습니다.")
         else:
             print("에러: 데이터 파일에서 'target' 또는 'text' 컬럼을 찾을 수 없습니다.")
@@ -90,8 +87,7 @@ def train_model():
     print("텍스트 전처리 완료.")
 
     # 3. 데이터 분할 (훈련 세트와 테스트 세트)
-    # 데이터가 충분한지 다시 확인
-    if len(df) < 2: # 최소한 훈련/테스트로 나눌 수 있는 2개 이상의 샘플이 있어야 함
+    if len(df) < 2:
         print(f"에러: 데이터 샘플 수가 너무 적어 훈련/테스트 분할을 할 수 없습니다. 현재 샘플 수: {len(df)}")
         exit(1)
 
@@ -103,7 +99,7 @@ def train_model():
 
     # 4. TF-IDF 벡터라이저 학습 및 변환
     print("TF-IDF 벡터라이저 학습을 시작합니다.")
-    tfidf_vectorizer = TfidfVectorizer(max_features=5000) # 상위 5000개 특징 사용
+    tfidf_vectorizer = TfidfVectorizer(max_features=5000)
     X_train_tfidf = tfidf_vectorizer.fit_transform(X_train)
     X_test_tfidf = tfidf_vectorizer.transform(X_test)
     print("TF-IDF 벡터라이저 학습 및 변환 완료.")
@@ -130,7 +126,6 @@ def train_model():
     print("모델 평가 완료.")
 
     # 7. 모델과 벡터라이저 저장
-    # models 폴더가 없으면 생성 (루트 폴더에 생성하도록 경로 수정)
     import os
     os.makedirs('../models', exist_ok=True)
 
