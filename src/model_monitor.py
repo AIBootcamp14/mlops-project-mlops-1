@@ -6,6 +6,7 @@ from sklearn.metrics import accuracy_score
 import nltk
 from nltk.stem import PorterStemmer
 import re
+import os # os 모듈을 추가하여 GITHUB_OUTPUT 환경 변수에 접근합니다.
 
 # NLTK 데이터 다운로드 (로컬 실행을 위해)
 try:
@@ -33,6 +34,9 @@ def preprocess_text(text):
 
 def monitor_model():
     logger.info("=== 모델 모니터링 시작 ===")
+    
+    # 기본값으로 재학습이 필요하지 않다고 설정
+    retrain_needed = False
 
     # 1. 모델과 벡터라이저 로드
     model_path = 'models/spam_classification_model.joblib'
@@ -40,7 +44,8 @@ def monitor_model():
 
     if not Path(model_path).exists() or not Path(vectorizer_path).exists():
         logger.error("❌ 모델 또는 벡터라이저 파일이 없습니다. 먼저 모델을 훈련시키세요.")
-        return False
+        # 재학습이 필요하다고 판단하여 새 워크플로우를 트리거하지 않도록 False로 설정
+        return retrain_needed
 
     model = joblib.load(model_path)
     vectorizer = joblib.load(vectorizer_path)
@@ -73,7 +78,7 @@ def monitor_model():
         logger.info(f"✅ 새로운 데이터 로드 완료: {df_new.shape}")
     except Exception as e:
         logger.error(f"❌ 새로운 데이터 로드 중 오류 발생: {e}")
-        return False
+        return retrain_needed
 
     # 3. 새로운 데이터 전처리 및 특징 추출
     logger.info("텍스트 전처리를 시작합니다.")
@@ -97,19 +102,32 @@ def monitor_model():
         performance_threshold = 0.8
         if accuracy < performance_threshold:
             logger.warning(f"⚠️ 모델 성능이 임계값({performance_threshold:.2f})보다 낮습니다. 재학습이 필요합니다!")
-            return True # 재학습 필요
+            retrain_needed = True # 재학습 필요
         else:
             logger.info("✅ 모델 성능이 양호합니다. 재학습이 필요하지 않습니다.")
-            return False
     else:
         # 정답이 없는 경우, 데이터 드리프트 감지 로직을 추가해야 함
         logger.warning("⚠️ 새로운 데이터에 정답(target) 컬럼이 없어 성능을 평가할 수 없습니다. 데이터 드리프트를 별도로 모니터링해야 합니다.")
         # 이 예제에서는 일단 항상 False를 반환
-        return False
+        retrain_needed = False
+
+    return retrain_needed
 
 if __name__ == "__main__":
-    retrain_needed = monitor_model()
-    if retrain_needed:
+    retrain = monitor_model()
+    # GITHUB_OUTPUT에 재학습 필요 여부 변수를 저장
+    # 이 변수는 워크플로우에서 조건문으로 사용될 예정
+    # ::set-output은 더 이상 사용되지 않으므로 GITHUB_OUTPUT을 사용합니다.
+    output_path = os.getenv('GITHUB_OUTPUT')
+    if output_path:
+        with open(output_path, 'a') as f:
+            f.write(f'retrain_needed={str(retrain).lower()}\n')
+    else:
+        # GITHUB_OUTPUT 변수가 없을 경우 (로컬 환경 등)
+        print(f'retrain_needed={str(retrain).lower()}')
+
+    if retrain:
         logger.info("🔥 재학습 워크플로우를 트리거합니다.")
     else:
         logger.info("✨ 모니터링 완료. 재학습은 필요 없습니다.")
+

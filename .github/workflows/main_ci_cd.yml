@@ -1,4 +1,3 @@
-# .github/workflows/main_ci_cd.yml
 name: MLOps CI/CD Pipeline
 
 on:
@@ -8,8 +7,11 @@ on:
   workflow_dispatch:
 
 jobs:
-  ci:
+  # 1. 모델 모니터링: 재학습이 필요한지 확인하는 작업
+  check_for_retrain:
     runs-on: ubuntu-latest
+    outputs:
+      retrain_needed: ${{ steps.monitor_step.outputs.retrain_needed }}
 
     steps:
       - name: Checkout code
@@ -26,6 +28,31 @@ jobs:
       - name: Download NLTK data
         run: python -m nltk.downloader punkt wordnet stopwords
 
+      - name: Monitor model performance
+        id: monitor_step
+        run: python src/model_monitor.py
+
+  # 2. CI (모델 학습): 모니터링 결과 재학습이 필요한 경우에만 실행
+  ci:
+    runs-on: ubuntu-latest
+    needs: check_for_retrain
+    if: needs.check_for_retrain.outputs.retrain_needed == 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: pip install --no-cache-dir -r requirements.txt --break-system-packages
+
+      - name: Download NLTK data
+        run: python -m nltk.downloader punkt wordnet stopwords
+      
       - name: Preprocess data
         run: python data/scripts/preprocess_data.py
       
@@ -38,6 +65,7 @@ jobs:
       - name: Run tests
         run: python -m pytest tests/test_model.py
 
+  # 3. Deploy: CI 작업이 성공적으로 완료되었을 때만 실행
   deploy:
     needs: ci
     runs-on: ubuntu-latest
@@ -62,30 +90,3 @@ jobs:
           context: .
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/mlops-spam-classifier:latest
-
-  monitor:
-    needs: deploy
-    runs-on: ubuntu-latest
-    if: success() && github.ref == 'refs/heads/main'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-
-      - name: Install dependencies
-        run: pip install --no-cache-dir -r requirements.txt --break-system-packages
-
-      - name: Download NLTK data
-        run: python -m nltk.downloader punkt wordnet stopwords
-
-      - name: Monitor model performance
-        id: monitor_job
-        run: |
-          python src/model_monitor.py
-          # 여기에 모델 재학습을 트리거하는 로직을 추가할 수 있음
-          echo "모델 모니터링 완료."
