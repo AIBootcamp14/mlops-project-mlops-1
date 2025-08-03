@@ -33,6 +33,7 @@ jobs:
         with:
           name: models
           path: models
+          if-no-files-found: ignore
 
       - name: Monitor model performance
         id: monitor_step
