@@ -1,0 +1,62 @@
+name: Model Monitoring and Retraining
+
+on:
+  schedule:
+    # 매일 자정(UTC 기준)에 워크플로우 실행
+    - cron: '0 0 * * *' 
+  workflow_dispatch:
+
+jobs:
+  check_and_retrain:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: pip install --no-cache-dir -r requirements.txt --break-system-packages
+
+      - name: Download NLTK data
+        run: python -m nltk.downloader punkt wordnet stopwords
+      
+      - name: Download latest model artifact
+        id: download_model
+        uses: actions/download-artifact@v4
+        with:
+          name: models
+          path: models
+          if-no-files-found: ignore
+
+      - name: Monitor model performance and decide retrain
+        id: monitor_step
+        run: |
+          # artifact가 없는 경우, 재학습이 필요하다고 판단하여 강제 실행
+          if [ ! -d "models" ]; then
+            echo "모델 아티팩트가 없어 새로 훈련합니다."
+            echo "retrain_needed=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          # 모델이 있는 경우, 성능 모니터링 실행
+          python src/model_monitor.py
+          
+      - name: Retrain and Deploy if needed
+        if: steps.monitor_step.outputs.retrain_needed == 'true'
+        run: |
+          # 이 부분에 모델 재학습 및 배포 로직을 넣습니다.
+          # 기존 CI/CD 파이프라인의 ci, deploy 스크립트를 재사용할 수 있습니다.
+          echo "모델 재학습 및 배포를 시작합니다."
+          # 실제로는 다른 워크플로우를 호출하거나, 스크립트를 직접 실행합니다.
+          # 예:
+          # python data/scripts/preprocess_data.py
+          # python notebooks/train_model.py
+          # ...
+          # docker build -t your-image .
+          # docker push your-image
+          
