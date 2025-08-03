@@ -34,7 +34,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: models
-          paths: models
+          path: models  # 'paths'를 'path'로 수정
 
   deploy:
     runs-on: ubuntu-latest
