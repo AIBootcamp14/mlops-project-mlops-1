@@ -2,13 +2,14 @@ name: Model Monitoring and Retraining
 
 on:
   schedule:
-    # 매일 자정(UTC 기준)에 워크플로우 실행
     - cron: '0 0 * * *' 
   workflow_dispatch:
 
 jobs:
   check_and_retrain:
     runs-on: ubuntu-latest
+    outputs:
+      retrain_needed: ${{ steps.monitor_step.outputs.retrain_needed }}
 
     steps:
       - name: Checkout code
@@ -25,38 +26,50 @@ jobs:
       - name: Download NLTK data
         run: python -m nltk.downloader punkt wordnet stopwords
       
+      - name: Check for existing models artifact
+        id: check_artifact
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { data: artifacts } = await github.rest.actions.listArtifactsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            const modelsArtifact = artifacts.artifacts.find(artifact => artifact.name === 'models');
+            if (modelsArtifact) {
+              console.log('✅ models artifact found.');
+              core.setOutput('artifact_exists', 'true');
+            } else {
+              console.log('⚠️ No models artifact found. Forcing a retrain.');
+              core.setOutput('artifact_exists', 'false');
+            }
+
       - name: Download latest model artifact
-        id: download_model
+        if: steps.check_artifact.outputs.artifact_exists == 'true'
         uses: actions/download-artifact@v4
         with:
           name: models
           path: models
-          if-no-files-found: ignore
 
-      - name: Monitor model performance and decide retrain
+      - name: Monitor model performance
         id: monitor_step
+        if: steps.check_artifact.outputs.artifact_exists == 'true'
         run: |
-          # artifact가 없는 경우, 재학습이 필요하다고 판단하여 강제 실행
-          if [ ! -d "models" ]; then
-            echo "모델 아티팩트가 없어 새로 훈련합니다."
-            echo "retrain_needed=true" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-          
-          # 모델이 있는 경우, 성능 모니터링 실행
-          python src/model_monitor.py
-          
+          # GITHUB_OUTPUT에 재학습 필요 여부 변수를 저장
+          retrain_output=$(python src/model_monitor.py)
+          echo "$retrain_output" >> $GITHUB_OUTPUT
+      
+      - name: Check for initial build
+        if: steps.check_artifact.outputs.artifact_exists == 'false'
+        id: initial_build
+        run: |
+          echo "retrain_needed=true" >> $GITHUB_OUTPUT
+
       - name: Retrain and Deploy if needed
-        if: steps.monitor_step.outputs.retrain_needed == 'true'
+        if: steps.monitor_step.outputs.retrain_needed == 'true' || steps.initial_build.outputs.retrain_needed == 'true'
         run: |
-          # 이 부분에 모델 재학습 및 배포 로직을 넣습니다.
-          # 기존 CI/CD 파이프라인의 ci, deploy 스크립트를 재사용할 수 있습니다.
-          echo "모델 재학습 및 배포를 시작합니다."
-          # 실제로는 다른 워크플로우를 호출하거나, 스크립트를 직접 실행합니다.
-          # 예:
-          # python data/scripts/preprocess_data.py
-          # python notebooks/train_model.py
-          # ...
-          # docker build -t your-image .
-          # docker push your-image
-          
+          echo "🔥 재학습 및 배포를 위한 CI/CD 워크플로우를 트리거합니다."
+          # 이 부분에서 main_ci_cd.yml 워크플로우를 재실행하거나, 
+          # ci, deploy 작업을 직접 수행하는 스크립트를 추가할 수 있습니다.
+          # 예: github cli 사용
+          # gh workflow run main_ci_cd.yml
