@@ -5,9 +5,12 @@ on:
     branches:
       - main
   workflow_dispatch:
+  # 새로운 트리거 추가: 매일 자정 00:00에 파이프라인을 자동 실행 (UTC 기준)
+  schedule:
+    - cron: '0 0 * * *'
 
 jobs:
-  # 새로운 잡: 모델 성능 및 데이터 드리프트 모니터링
+  # 모델 성능 및 데이터 드리프트 모니터링
   monitor:
     runs-on: ubuntu-latest
     outputs:
@@ -26,10 +29,10 @@ jobs:
 
       # 모델 모니터링 스크립트 실행 및 재학습 필요 여부 결정
       - name: Run model monitoring
-        id: check  # 이 스텝의 ID를 'check'로 설정
+        id: check
         run: python src/model_monitor.py
       
-  # 기존 CI 잡: 'monitor' 잡의 결과에 따라 조건부 실행
+  # CI 잡: 'monitor' 잡의 결과에 따라 조건부 실행
   ci:
     runs-on: ubuntu-latest
     needs: monitor
@@ -64,7 +67,7 @@ jobs:
           name: models
           path: models
 
-  # 기존 배포 잡: 'ci' 잡이 성공했을 때만 실행
+  # 배포 잡: 'ci' 잡이 성공했을 때만 실행
   deploy:
     runs-on: ubuntu-latest
     needs: ci
