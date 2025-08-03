@@ -38,11 +38,11 @@ jobs:
         id: monitor_step
         run: python src/model_monitor.py
 
-  # 2. CI (모델 학습): 모니터링 결과 재학습이 필요한 경우에만 실행
+  # 2. CI (모델 학습): 모니터링 결과와 관계없이 무조건 실행 (임시)
   ci:
     runs-on: ubuntu-latest
     needs: check_for_retrain
-    if: needs.check_for_retrain.outputs.retrain_needed == 'true'
+    if: always() # 이 부분을 수정해서 항상 실행되도록 바꿨어.
 
     steps:
       - name: Checkout code
