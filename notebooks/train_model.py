@@ -13,11 +13,11 @@ import re
 # NLTK 데이터 다운로드 (GitHub Actions 워크플로우에서 이미 다운로드하지만, 로컬 실행을 위해 포함)
 try:
     nltk.data.find('tokenizers/punkt')
-except LookupError: # 이 부분을 수정했어.
+except LookupError:
     nltk.download('punkt')
 try:
     nltk.data.find('taggers/averaged_perceptron_tagger')
-except LookupError: # 이 부분을 수정했어.
+except LookupError:
     nltk.download('averaged_perceptron_tagger')
 
 # 텍스트 전처리 함수
