@@ -28,8 +28,9 @@ jobs:
       - name: Download NLTK data
         run: python -m nltk.downloader punkt wordnet stopwords
       
+      # actions/download-artifact@v3 -> v4로 변경
       - name: Download model artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: models
           path: models
@@ -71,9 +72,9 @@ jobs:
       - name: Run tests
         run: python -m pytest tests/test_model.py
 
-      # 새로 추가된 부분: 모델 파일을 아티팩트로 저장
+      # actions/upload-artifact@v3 -> v4로 변경
       - name: Upload model artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: models
           path: models
