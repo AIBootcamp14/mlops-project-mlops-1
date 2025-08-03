@@ -5,6 +5,9 @@ on:
     - cron: '0 0 * * *' 
   workflow_dispatch:
 
+permissions:
+  actions: write # 이 부분을 추가
+
 jobs:
   check_and_retrain:
     runs-on: ubuntu-latest
