@@ -26,7 +26,7 @@ jobs:
 
       - name: Train and save model
         run: |
-          python src/train_model.py
+          python train_model.py
           mkdir -p models
           mv spam_classification_model.joblib models/
           mv tfidf_vectorizer.joblib models/
