@@ -33,6 +33,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: monitor
     if: needs.monitor.outputs.retrain_needed == 'true'
+    outputs:
+      deploy_needed: ${{ steps.train.outputs.deploy_needed }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -52,12 +54,12 @@ jobs:
         run: python src/data_ingestion.py
       
       - name: Train and save model
+        id: train
         run: python notebooks/train_model.py
 
       - name: Run tests
         run: python -m pytest
         
-      # MLflow 실험 기록을 아티팩트로 업로드하는 새로운 스텝
       - name: Upload MLflow artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -73,7 +75,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: ci
-    if: success()
+    if: needs.ci.outputs.deploy_needed == 'true'
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
