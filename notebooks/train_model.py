@@ -9,8 +9,8 @@ import nltk
 from nltk.stem import PorterStemmer
 import re
 import os
-import mlflow # MLflow 라이브러리 임포트
-import mlflow.sklearn # MLflow scikit-learn 통합 임포트
+import mlflow
+import mlflow.sklearn
 
 # NLTK 데이터 다운로드 (GitHub Actions 워크플로우에서 이미 다운로드하지만, 로컬 실행을 위해 포함)
 try:
@@ -41,8 +41,25 @@ def preprocess_text(text):
     words = [stemmer.stem(word) for word in words]
     return ' '.join(words)
 
+# MLflow에서 이전 모델의 최고 성능을 가져오는 함수 추가
+def get_best_model_performance():
+    try:
+        # MLflow 실험에서 모든 실행 기록을 가져옴
+        runs = mlflow.search_runs(order_by=["metrics.accuracy DESC"])
+        if not runs.empty:
+            # 가장 높은 정확도를 가진 실행의 정보를 반환
+            best_run = runs.iloc[0]
+            best_accuracy = best_run['metrics.accuracy']
+            best_run_id = best_run['run_id']
+            print(f"✅ MLflow에서 이전 최고 정확도({best_accuracy:.4f}) 모델을 찾았습니다. Run ID: {best_run_id}")
+            return best_accuracy
+    except Exception as e:
+        print(f"경고: MLflow에서 이전 모델 성능을 불러오는 데 실패했습니다. {e}")
+    return 0.0  # 기록이 없거나 오류 발생 시 0.0 반환
+
 def train_model():
     print("모델 학습을 시작합니다.")
+    deploy_needed = "true"  # 기본값은 배포 필요로 설정
 
     # MLflow run 시작
     with mlflow.start_run():
@@ -162,20 +179,34 @@ def train_model():
         mlflow.log_metric("recall", recall)
         mlflow.log_metric("f1_score", f1)
 
-        # 8. 모델과 벡터라이저 저장
-        os.makedirs('models', exist_ok=True)
+        # 8. 모델 성능 비교 및 배포 결정 (새로운 기능)
+        best_accuracy = get_best_model_performance()
+        if accuracy >= best_accuracy:
+            print("✨ 새로운 모델의 성능이 더 좋습니다. 배포를 진행합니다.")
+            
+            # 9. 모델과 벡터라이저 저장
+            os.makedirs('models', exist_ok=True)
+            model_path = 'models/spam_classification_model.joblib'
+            vectorizer_path = 'models/tfidf_vectorizer.joblib'
+            joblib.dump(model, model_path)
+            joblib.dump(tfidf_vectorizer, vectorizer_path)
+            print(f"모델 저장 완료: {model_path}")
+            print(f"벡터라이저 저장 완료: {vectorizer_path}")
+            
+            # MLflow에 모델 및 벡터라이저 아티팩트로 기록
+            mlflow.sklearn.log_model(model, "spam_classification_model")
+            mlflow.log_artifact(vectorizer_path, "tfidf_vectorizer")
+            
+        else:
+            print("⚠️ 새로운 모델의 성능이 더 낮습니다. 롤백이 필요합니다. 배포를 중단합니다.")
+            deploy_needed = "false"
 
-        model_path = 'models/spam_classification_model.joblib'
-        vectorizer_path = 'models/tfidf_vectorizer.joblib'
-
-        joblib.dump(model, model_path)
-        joblib.dump(tfidf_vectorizer, vectorizer_path)
-        print(f"모델 저장 완료: {model_path}")
-        print(f"벡터라이저 저장 완료: {vectorizer_path}")
-
-        # MLflow에 모델 및 벡터라이저 아티팩트로 기록
-        mlflow.sklearn.log_model(model, "spam_classification_model")
-        mlflow.log_artifact(vectorizer_path, "tfidf_vectorizer")
+    # 워크플로우에 출력 변수 전달
+    if os.getenv('GITHUB_OUTPUT'):
+        with open(os.getenv('GITHUB_OUTPUT'), 'a') as f:
+            f.write(f"deploy_needed={deploy_needed}\n")
+    else:
+        print(f"deploy_needed={deploy_needed}")
 
 if __name__ == "__main__":
     train_model()
