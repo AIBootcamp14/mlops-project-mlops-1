@@ -1,6 +1,7 @@
 import joblib
 import pandas as pd
 import logging
+import os
 from sklearn.metrics import accuracy_score
 
 # 로깅 설정
@@ -36,6 +37,8 @@ def main():
     """모델 모니터링 및 재학습 결정 로직"""
     logging.info("=== 모델 모니터링 시작 ===")
     
+    retrain_needed = "false"
+    
     try:
         # 1. 최신 모델 및 벡터라이저 로드
         model = joblib.load('models/spam_classification_model.joblib')
@@ -58,17 +61,23 @@ def main():
         threshold = 0.80 # 성능 임계값
         if accuracy < threshold:
             logging.warning(f"⚠️ 모델 성능이 임계값({threshold})보다 낮습니다. 재학습이 필요합니다!")
-            print("retrain_needed=true")
+            retrain_needed = "true"
         else:
             logging.info("✨ 모델 성능이 양호합니다. 재학습은 필요하지 않습니다.")
-            print("retrain_needed=false")
             
     except FileNotFoundError:
         logging.error("❌ 모델 파일을 찾을 수 없습니다. 최초 실행이거나 CI/CD 파이프라인에 문제가 있습니다.")
-        print("retrain_needed=true")
+        retrain_needed = "true"
     except Exception as e:
         logging.error(f"❌ 오류 발생: {e}")
-        print("retrain_needed=true")
+        retrain_needed = "true"
+
+    # 워크플로우에 출력 변수 전달
+    if os.getenv('GITHUB_OUTPUT'):
+        with open(os.getenv('GITHUB_OUTPUT'), 'a') as f:
+            f.write(f"retrain_needed={retrain_needed}\n")
+    else:
+        print(f"retrain_needed={retrain_needed}")
 
 if __name__ == "__main__":
     main()
