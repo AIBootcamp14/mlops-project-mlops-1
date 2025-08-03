@@ -33,6 +33,8 @@ jobs:
         with:
           name: models
           path: models
+          # 새로 추가된 부분: 아티팩트가 없어도 실패하지 않도록 설정
+          if-no-files-found: ignore
 
       - name: Monitor model performance
         id: monitor_step
@@ -42,7 +44,7 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     needs: check_for_retrain
-    # if: needs.check_for_retrain.outputs.retrain_needed == 'true' 이 조건문을 임시로 제거합니다.
+    # if: needs.check_for_retrain.outputs.retrain_needed == 'true' 이 조건문은 여전히 제거된 상태여야 합니다.
 
     steps:
       - name: Checkout code
