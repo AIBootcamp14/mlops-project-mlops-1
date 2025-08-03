@@ -9,7 +9,7 @@ jobs:
   check_and_retrain:
     runs-on: ubuntu-latest
     outputs:
-      retrain_needed: ${{ steps.check_step.outputs.retrain_needed }}
+      retrain_needed: ${{ steps.monitor_step.outputs.retrain_needed }}
 
     steps:
       - name: Checkout code
@@ -26,8 +26,8 @@ jobs:
       - name: Download NLTK data
         run: python -m nltk.downloader punkt wordnet stopwords
 
-      - name: Check for latest models artifact run
-        id: get_artifact_info
+      - name: Find and download latest models artifact
+        id: download_artifact_step
         uses: actions/github-script@v6
         with:
           script: |
@@ -51,8 +51,18 @@ jobs:
               if (modelsArtifact) {
                 console.log('✅ Found models artifact from run ' + lastSuccessfulRun.id);
                 core.setOutput('artifact_exists', 'true');
-                core.setOutput('run_id', lastSuccessfulRun.id);
-                core.setOutput('artifact_id', modelsArtifact.id);
+                
+                const download = await github.rest.actions.downloadArtifact({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  artifact_id: modelsArtifact.id,
+                  archive_format: 'zip'
+                });
+                
+                const fs = require('fs');
+                fs.writeFileSync('artifact.zip', Buffer.from(download.data));
+                
+                console.log('✅ models artifact downloaded.');
                 return;
               }
             }
@@ -60,25 +70,22 @@ jobs:
             console.log('⚠️ No models artifact found. Forcing a retrain.');
             core.setOutput('artifact_exists', 'false');
 
-      - name: Download latest model artifact
-        if: steps.get_artifact_info.outputs.artifact_exists == 'true'
-        uses: actions/download-artifact@v4
-        with:
-          run-id: ${{ steps.get_artifact_info.outputs.run_id }}
-          name: models
-          path: models
-
-      - name: Monitor model performance and decide retrain
-        id: monitor_step
-        if: steps.get_artifact_info.outputs.artifact_exists == 'true'
+      - name: Unzip artifact
+        if: steps.download_artifact_step.outputs.artifact_exists == 'true'
         run: |
-          retrain_output=$(python src/model_monitor.py)
-          echo "$retrain_output" >> $GITHUB_OUTPUT
-
+          unzip artifact.zip -d models
+          rm artifact.zip
+      
+      - name: Monitor model performance
+        id: monitor_step
+        if: steps.download_artifact_step.outputs.artifact_exists == 'true'
+        run: |
+          python src/model_monitor.py
+          
       - name: Retrain and Deploy if needed
         id: final_retrain_check
         run: |
-          if [ "${{ steps.get_artifact_info.outputs.artifact_exists }}" == "false" ]; then
+          if [ "${{ steps.download_artifact_step.outputs.artifact_exists }}" == "false" ]; then
             echo "retrain_needed=true" >> $GITHUB_OUTPUT
             echo "🔥 최초 실행입니다. 재학습 및 배포를 위한 CI/CD 워크플로우를 트리거합니다."
           elif [ "${{ steps.monitor_step.outputs.retrain_needed }}" == "true" ]; then
