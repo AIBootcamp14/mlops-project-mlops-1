@@ -1,3 +1,4 @@
+# .github/workflows/api-deploy.yml
 # 이 워크플로우는 FastAPI API의 Docker 이미지를 빌드하고, 
 # Docker Hub에 푸시하는 역할입니다!
 
@@ -34,11 +35,10 @@ jobs:
       uses: docker/build-push-action@v5
       with:
         context: . # 현재 워크플로우가 실행되는 디렉토리를 빌드 컨텍스트로 사용
-        file: api/Dockerfile # api/Dockerfile을 사용하여 이미지 빌드
+        file: Dockerfile # api/Dockerfile -> Dockerfile로 수정
         push: true
         tags: |
           rladud9689/spam-classifier-api:latest
           rladud9689/spam-classifier-api:${{ github.sha }}
         cache-from: type=gha # GitHub Actions 캐시를 사용하여 빌드 속도 향상
         cache-to: type=gha,mode=max
-
