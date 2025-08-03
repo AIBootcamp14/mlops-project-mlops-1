@@ -4,7 +4,7 @@ import logging
 import os
 from sklearn.metrics import accuracy_score
 from data_validator import validate_data
-from data_drift_detector import detect_data_drift # <-- 이 부분을 추가
+from data_drift_detector import detect_data_drift
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -22,8 +22,8 @@ def fetch_reference_data():
     모델 학습에 사용된 원본 데이터를 가져옵니다.
     """
     logging.info("✅ 원본 훈련 데이터 로드")
-    # 원본 데이터셋의 경로를 지정
-    return pd.read_csv('data/SMSSpamCollection', sep='\t', header=None, names=['label', 'text'])
+    # 원본 데이터셋의 경로를 수정
+    return pd.read_csv('../data/spam.csv', sep='\t', header=None, names=['label', 'text']) # <-- 이 부분을 수정
 
 def preprocess_data(data, vectorizer):
     """데이터를 전처리하고 특징을 추출합니다."""
@@ -47,7 +47,7 @@ def main():
         logging.info("✅ 모델 및 벡터라이저 로드 완료.")
         
         # 2. 원본 데이터 및 새로운 데이터 가져오기
-        reference_data = fetch_reference_data() # <-- 원본 데이터 로드
+        reference_data = fetch_reference_data()
         new_data = fetch_new_data()
         
         # 3. 데이터 유효성 검사
@@ -59,7 +59,7 @@ def main():
                     f.write(f"retrain_needed=false\n")
             return
 
-        # 4. 데이터 드리프트 감지 <-- 이 부분을 추가
+        # 4. 데이터 드리프트 감지
         is_drift_detected = detect_data_drift(reference_data, new_data)
         
         # 5. 데이터 전처리 및 예측
@@ -72,8 +72,8 @@ def main():
         logging.info(f"모델 정확도: {accuracy:.4f}")
 
         # 7. 재학습 결정
-        threshold = 0.80 # 성능 임계값
-        if accuracy < threshold or is_drift_detected: # <-- 드리프트 감지 결과도 포함
+        threshold = 0.80
+        if accuracy < threshold or is_drift_detected:
             if is_drift_detected:
                 logging.warning(f"⚠️ 데이터 드리프트 감지! 재학습이 필요합니다!")
             if accuracy < threshold:
