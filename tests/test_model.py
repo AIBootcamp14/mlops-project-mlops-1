@@ -4,7 +4,7 @@ import pandas as pd
 import joblib
 from sklearn.metrics import accuracy_score
 
-# 테스트할 모델과 데이터 파일 경로 (수정)
+# 테스트할 모델과 데이터 파일 경로
 MODEL_PATH = 'models/spam_classification_model.joblib'
 VECTORIZER_PATH = 'models/tfidf_vectorizer.joblib'
 TEST_DATA_PATH = 'data/spam.csv'  # 이 부분을 수정했어
@@ -73,7 +73,7 @@ def test_prediction_on_sample_text(trained_model, vectorizer):
     spam_text = ["WINNER! You have won a new iPhone. Claim now!"]
     ham_text = ["Hey, let's grab lunch tomorrow?"]
     
-    # 텍스트 전처리 (여기에도 전처리 함수가 필요해 보여서 추가했어)
+    # 텍스트 전처리 (test_model.py에도 전처리 함수가 필요해 보여서 추가)
     stemmer = PorterStemmer()
     def preprocess_text_for_test(text):
         if not isinstance(text, str):

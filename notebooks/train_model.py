@@ -42,13 +42,13 @@ def preprocess_text(text):
 def train_model():
     print("모델 학습을 시작합니다.")
 
-    # 1. 데이터 로드 (data/spam.csv 파일 - pandas.read_csv로 재시도)
+    # 1. 데이터 로드 (data/spam.csv 파일)
     try:
-        # data/spam.csv 파일 경로 수정
-        df = pd.read_csv('../data/spam.csv', encoding='latin-1', sep=',', quotechar='"', on_bad_lines='skip')
-        print(f"데이터 로드 성공: ../data/spam.csv. 총 {len(df)}개의 유효한 행 로드됨.")
+        # 데이터 파일 경로를 'data/spam.csv'로 되돌려야 함
+        df = pd.read_csv('data/spam.csv', encoding='latin-1', sep=',', quotechar='"', on_bad_lines='skip')
+        print(f"데이터 로드 성공: data/spam.csv. 총 {len(df)}개의 유효한 행 로드됨.")
     except FileNotFoundError:
-        print("에러: '../data/spam.csv' 파일을 찾을 수 없습니다. 경로를 확인하세요.")
+        print("에러: 'data/spam.csv' 파일을 찾을 수 없습니다. 경로를 확인하세요.")
         exit(1)
     except Exception as e:
         print(f"데이터 로드 중 예상치 못한 오류 발생: {e}")
