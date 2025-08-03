@@ -29,6 +29,13 @@ jobs:
       - name: Download NLTK data
         run: python -m nltk.downloader punkt wordnet stopwords
 
+      - name: Clean up old data file
+        run: |
+          if [ -f new_data.csv ]; then
+            rm new_data.csv
+            echo "✅ 기존 new_data.csv 파일을 삭제했습니다."
+          fi
+
       - name: Generate new data
         run: python src/data_generator.py
 
