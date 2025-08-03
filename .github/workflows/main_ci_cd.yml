@@ -28,8 +28,8 @@ jobs:
         run: |
           python notebooks/train_model.py
           mkdir -p models
-          mv spam_classification_model.joblib models/
-          mv tfidf_vectorizer.joblib models/
+          mv notebooks/models/spam_classification_model.joblib models/
+          mv notebooks/models/tfidf_vectorizer.joblib models/
 
       - name: Run tests
         run: python -m pytest
