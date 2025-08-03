@@ -1,0 +1,40 @@
+name: Temporary Model Bootstrap
+
+on:
+  workflow_dispatch:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: pip install --no-cache-dir -r requirements.txt --break-system-packages
+
+      - name: Download NLTK data
+        run: python -m nltk.downloader punkt wordnet stopwords
+      
+      - name: Preprocess data
+        run: python data/scripts/preprocess_data.py
+      
+      - name: Validate data
+        run: python data/scripts/validate_data.py
+
+      - name: Train model
+        run: python notebooks/train_model.py
+
+      - name: Run tests
+        run: python -m pytest tests/test_model.py
+
+      - name: Upload model artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: models
+          path: models
