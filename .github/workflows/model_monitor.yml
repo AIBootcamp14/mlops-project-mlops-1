@@ -89,6 +89,14 @@ jobs:
       
       - name: Trigger CI/CD workflow
         if: steps.final_retrain_check.outputs.retrain_needed == 'true'
-        run: |
-          echo "Triggering main_ci_cd.yml workflow..."
-          # 실제로는 다른 워크플로우를 호출하거나, 재학습/배포 스크립트를 여기에 직접 작성
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'main_ci_cd.yml',
+              ref: 'main',
+            });
+            console.log('✅ main_ci_cd.yml workflow has been triggered.');
