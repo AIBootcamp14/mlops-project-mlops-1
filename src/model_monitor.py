@@ -12,17 +12,8 @@ def fetch_new_data():
     외부 시스템으로부터 새로운 데이터를 가져오는 것을 시뮬레이션합니다.
     실제 환경에서는 데이터베이스나 API에서 데이터를 로드하는 코드로 대체됩니다.
     """
-    logging.info("✅ 새로운 데이터 로드 완료: (4, 2)")
-    new_data = {
-        'text': [
-            "WINNER!! You have won a prize! Claim it now!",
-            "Hello, hope you're having a great day.",
-            "URGENT: Your account has been compromised. Click here to verify.",
-            "Can we reschedule our meeting for tomorrow?"
-        ],
-        'label': ['spam', 'ham', 'spam', 'ham']
-    }
-    return pd.DataFrame(new_data)
+    logging.info("✅ new_data.csv 파일에서 데이터 로드")
+    return pd.read_csv('new_data.csv')
 
 def preprocess_data(data, vectorizer):
     """데이터를 전처리하고 특징을 추출합니다."""
