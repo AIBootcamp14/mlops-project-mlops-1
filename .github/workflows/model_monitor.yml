@@ -83,6 +83,8 @@ jobs:
       - name: Monitor model performance
         id: monitor_step
         if: steps.get_artifact_info.outputs.download_url != ''
+        env:
+          MODEL_PATH_BASE: '..'
         run: |
           python src/model_monitor.py
           

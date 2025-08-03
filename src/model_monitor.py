@@ -23,7 +23,7 @@ def fetch_reference_data():
     """
     logging.info("✅ 원본 훈련 데이터 로드")
     # 원본 데이터셋의 경로를 수정
-    return pd.read_csv('../data/spam.csv', sep='\t', header=None, names=['label', 'text']) # <-- 이 부분을 수정
+    return pd.read_csv('../data/spam.csv', sep='\t', header=None, names=['label', 'text'])
 
 def preprocess_data(data, vectorizer):
     """데이터를 전처리하고 특징을 추출합니다."""
@@ -41,9 +41,12 @@ def main():
     retrain_needed = "false"
     
     try:
+        # 모델 폴더의 기본 경로를 환경 변수에서 가져옴. 기본값은 '..'
+        base_path = os.environ.get('MODEL_PATH_BASE', '..')
+        
         # 1. 최신 모델 및 벡터라이저 로드
-        model = joblib.load('models/spam_classification_model.joblib')
-        vectorizer = joblib.load('models/tfidf_vectorizer.joblib')
+        model = joblib.load(f'{base_path}/models/spam_classification_model.joblib')
+        vectorizer = joblib.load(f'{base_path}/models/tfidf_vectorizer.joblib')
         logging.info("✅ 모델 및 벡터라이저 로드 완료.")
         
         # 2. 원본 데이터 및 새로운 데이터 가져오기
