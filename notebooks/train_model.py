@@ -130,12 +130,12 @@ def train_model():
     print("모델 평가 완료.")
 
     # 7. 모델과 벡터라이저 저장
-    # models 폴더가 없으면 생성
+    # models 폴더가 없으면 생성 (루트 폴더에 생성하도록 경로 수정)
     import os
-    os.makedirs('models', exist_ok=True)
+    os.makedirs('../models', exist_ok=True)
 
-    model_path = 'models/spam_classification_model.joblib'
-    vectorizer_path = 'models/tfidf_vectorizer.joblib'
+    model_path = '../models/spam_classification_model.joblib'
+    vectorizer_path = '../models/tfidf_vectorizer.joblib'
 
     joblib.dump(model, model_path)
     joblib.dump(tfidf_vectorizer, vectorizer_path)

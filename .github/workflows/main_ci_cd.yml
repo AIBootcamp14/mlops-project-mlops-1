@@ -27,6 +27,7 @@ jobs:
       - name: Train and save model
         run: |
           python notebooks/train_model.py
+          # 모델 파일이 notebooks/models/에 저장되므로, 이 파일을 루트의 models/로 이동
           mkdir -p models
           mv notebooks/models/spam_classification_model.joblib models/
           mv notebooks/models/tfidf_vectorizer.joblib models/
