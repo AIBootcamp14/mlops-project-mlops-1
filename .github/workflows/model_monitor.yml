@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  actions: write # 이 부분을 추가
+  actions: write
 
 jobs:
   check_and_retrain:
@@ -28,6 +28,9 @@ jobs:
 
       - name: Download NLTK data
         run: python -m nltk.downloader punkt wordnet stopwords
+
+      - name: Generate new data
+        run: python src/data_generator.py
 
       - name: Get latest artifact info
         id: get_artifact_info
@@ -79,14 +82,14 @@ jobs:
       - name: Check for initial build or retrain needed
         id: final_retrain_check
         run: |
-          if [ "${{ steps.get_artifact_info.outputs.download_url }}" == "" ]; then
-            echo "retrain_needed=true" >> $GITHUB_OUTPUT
-            echo "🔥 최초 실행입니다. 재학습 및 배포를 위한 CI/CD 워크플로우를 트리거합니다."
-          elif [ "${{ steps.monitor_step.outputs.retrain_needed }}" == "true" ]; then
-            echo "retrain_needed=true" >> $GITHUB_OUTPUT
+          # monitor_step이 retrain_needed를 출력하도록 수정했으므로,
+          # GITHUB_OUTPUT을 사용하여 값을 가져옵니다.
+          retrain_needed_output=$(python src/model_monitor.py | grep retrain_needed | cut -d= -f2)
+          echo "retrain_needed=$retrain_needed_output" >> $GITHUB_OUTPUT
+          
+          if [ "$retrain_needed_output" == "true" ]; then
             echo "🔥 모델 성능이 저하되어 재학습 및 배포를 위한 CI/CD 워크플로우를 트리거합니다."
           else
-            echo "retrain_needed=false" >> $GITHUB_OUTPUT
             echo "✨ 모니터링 완료. 재학습은 필요 없습니다."
           fi
       
