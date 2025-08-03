@@ -8,4 +8,4 @@ matplotlib==3.8.4
 numpy==1.26.4
 nltk==3.8.1
 pytest==7.4.0
-evidently==0.4.10
+evidently==0.5.5
