@@ -28,7 +28,6 @@ jobs:
       - name: Download NLTK data
         run: python -m nltk.downloader punkt wordnet stopwords
       
-      # actions/download-artifact@v3 -> v4로 변경
       - name: Download model artifact
         uses: actions/download-artifact@v4
         with:
@@ -39,11 +38,11 @@ jobs:
         id: monitor_step
         run: python src/model_monitor.py
 
-  # 2. CI (모델 학습): 모니터링 결과 재학습이 필요한 경우에만 실행
+  # 2. CI (모델 학습): 모니터링 결과에 관계없이 무조건 실행 (임시)
   ci:
     runs-on: ubuntu-latest
     needs: check_for_retrain
-    if: needs.check_for_retrain.outputs.retrain_needed == 'true'
+    # if: needs.check_for_retrain.outputs.retrain_needed == 'true' 이 조건문을 임시로 제거합니다.
 
     steps:
       - name: Checkout code
@@ -72,7 +71,6 @@ jobs:
       - name: Run tests
         run: python -m pytest tests/test_model.py
 
-      # actions/upload-artifact@v3 -> v4로 변경
       - name: Upload model artifact
         uses: actions/upload-artifact@v4
         with:
