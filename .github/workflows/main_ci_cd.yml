@@ -27,6 +27,12 @@ jobs:
 
       - name: Download NLTK data
         run: python -m nltk.downloader punkt wordnet stopwords
+      
+      - name: Download model artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: models
+          path: models
 
       - name: Monitor model performance
         id: monitor_step
@@ -64,6 +70,13 @@ jobs:
 
       - name: Run tests
         run: python -m pytest tests/test_model.py
+
+      # 새로 추가된 부분: 모델 파일을 아티팩트로 저장
+      - name: Upload model artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: models
+          path: models
 
   # 3. Deploy: CI 작업이 성공적으로 완료되었을 때만 실행
   deploy:
