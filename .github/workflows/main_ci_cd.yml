@@ -33,7 +33,7 @@ jobs:
         with:
           name: models
           path: models
-          # if-no-files-found: ignore # 이 줄을 삭제합니다.
+          if-no-files-found: ignore # 이 줄을 다시 추가했어
 
       - name: Monitor model performance
         id: monitor_step
