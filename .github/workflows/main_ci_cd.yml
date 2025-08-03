@@ -7,9 +7,42 @@ on:
   workflow_dispatch:
 
 jobs:
-  # 1. CI (모델 학습): main 브랜치에 푸시될 때마다 무조건 실행
+  # 1. 모델 모니터링: 재학습이 필요한지 확인하는 작업
+  check_for_retrain:
+    runs-on: ubuntu-latest
+    outputs:
+      retrain_needed: ${{ steps.monitor_step.outputs.retrain_needed }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: pip install --no-cache-dir -r requirements.txt --break-system-packages
+
+      - name: Download NLTK data
+        run: python -m nltk.downloader punkt wordnet stopwords
+      
+      - name: Download model artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: models
+          path: models
+
+      - name: Monitor model performance
+        id: monitor_step
+        run: python src/model_monitor.py
+
+  # 2. CI (모델 학습): 모니터링 결과 재학습이 필요한 경우에만 실행
   ci:
     runs-on: ubuntu-latest
+    needs: check_for_retrain
+    if: needs.check_for_retrain.outputs.retrain_needed == 'true'
 
     steps:
       - name: Checkout code
@@ -44,7 +77,7 @@ jobs:
           name: models
           path: models
 
-  # 2. Deploy: CI 작업이 성공적으로 완료되었을 때만 실행
+  # 3. Deploy: CI 작업이 성공적으로 완료되었을 때만 실행
   deploy:
     needs: ci
     runs-on: ubuntu-latest
