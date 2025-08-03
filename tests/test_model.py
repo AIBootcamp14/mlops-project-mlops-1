@@ -3,11 +3,14 @@ import os
 import pandas as pd
 import joblib
 from sklearn.metrics import accuracy_score
+import re
+import nltk
+from nltk.stem import PorterStemmer
 
 # 테스트할 모델과 데이터 파일 경로
 MODEL_PATH = 'models/spam_classification_model.joblib'
 VECTORIZER_PATH = 'models/tfidf_vectorizer.joblib'
-TEST_DATA_PATH = 'data/spam.csv'  # 이 부분을 수정했어
+TEST_DATA_PATH = 'data/spam.csv'
 
 # pytest 픽스처(fixture)를 사용해서 테스트에 필요한 객체를 미리 로드
 @pytest.fixture(scope="session")
@@ -43,6 +46,18 @@ def test_data():
 
     return df
 
+# 텍스트 전처리를 위한 함수 (test_model.py에 추가)
+stemmer = PorterStemmer()
+def preprocess_text_for_test(text):
+    if not isinstance(text, str):
+        text = str(text)
+    text = text.lower()
+    text = re.sub(r'\d+', '', text)
+    text = re.sub(r'[^a-zA-Z\s]', '', text)
+    words = nltk.word_tokenize(text)
+    words = [stemmer.stem(word) for word in words]
+    return ' '.join(words)
+
 def test_model_accuracy(trained_model, vectorizer, test_data):
     """
     1. 모델이 정상적으로 로드되는지 확인
@@ -73,22 +88,6 @@ def test_prediction_on_sample_text(trained_model, vectorizer):
     spam_text = ["WINNER! You have won a new iPhone. Claim now!"]
     ham_text = ["Hey, let's grab lunch tomorrow?"]
     
-    # 텍스트 전처리 (test_model.py에도 전처리 함수가 필요해 보여서 추가)
-    stemmer = PorterStemmer()
-    def preprocess_text_for_test(text):
-        if not isinstance(text, str):
-            text = str(text)
-        text = text.lower()
-        text = re.sub(r'\d+', '', text)
-        text = re.sub(r'[^a-zA-Z\s]', '', text)
-        words = nltk.word_tokenize(text)
-        words = [stemmer.stem(word) for word in words]
-        return ' '.join(words)
-    
-    import re
-    import nltk
-    from nltk.stem import PorterStemmer
-
     processed_spam_text = [preprocess_text_for_test(t) for t in spam_text]
     processed_ham_text = [preprocess_text_for_test(t) for t in ham_text]
 

@@ -127,10 +127,10 @@ def train_model():
 
     # 7. 모델과 벡터라이저 저장
     import os
-    os.makedirs('../models', exist_ok=True)
+    os.makedirs('models', exist_ok=True)  # 이 부분을 'models'로 수정
 
-    model_path = '../models/spam_classification_model.joblib'
-    vectorizer_path = '../models/tfidf_vectorizer.joblib'
+    model_path = 'models/spam_classification_model.joblib'  # 이 부분을 'models'로 수정
+    vectorizer_path = 'models/tfidf_vectorizer.joblib'  # 이 부분을 'models'로 수정
 
     joblib.dump(model, model_path)
     joblib.dump(tfidf_vectorizer, vectorizer_path)
