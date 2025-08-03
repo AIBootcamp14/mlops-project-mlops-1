@@ -9,7 +9,7 @@ jobs:
   check_and_retrain:
     runs-on: ubuntu-latest
     outputs:
-      retrain_needed: ${{ steps.monitor_step.outputs.retrain_needed }}
+      retrain_needed: ${{ steps.check_step.outputs.retrain_needed }}
 
     steps:
       - name: Checkout code
@@ -25,51 +25,74 @@ jobs:
 
       - name: Download NLTK data
         run: python -m nltk.downloader punkt wordnet stopwords
-      
-      - name: Check for existing models artifact
-        id: check_artifact
+
+      - name: Check for latest models artifact run
+        id: get_artifact_info
         uses: actions/github-script@v6
         with:
           script: |
-            const { data: artifacts } = await github.rest.actions.listArtifactsForRepo({
+            const { data: { workflow_runs } } = await github.rest.actions.listWorkflowRuns({
               owner: context.repo.owner,
               repo: context.repo.repo,
+              workflow_id: 'main_ci_cd.yml',
+              branch: 'main',
+              status: 'success',
             });
-            const modelsArtifact = artifacts.artifacts.find(artifact => artifact.name === 'models');
-            if (modelsArtifact) {
-              console.log('✅ models artifact found.');
-              core.setOutput('artifact_exists', 'true');
-            } else {
-              console.log('⚠️ No models artifact found. Forcing a retrain.');
-              core.setOutput('artifact_exists', 'false');
+            
+            const lastSuccessfulRun = workflow_runs[0];
+            if (lastSuccessfulRun) {
+              const { data: artifacts } = await github.rest.actions.listWorkflowRunArtifacts({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: lastSuccessfulRun.id,
+              });
+              const modelsArtifact = artifacts.artifacts.find(artifact => artifact.name === 'models');
+              
+              if (modelsArtifact) {
+                console.log('✅ Found models artifact from run ' + lastSuccessfulRun.id);
+                core.setOutput('artifact_exists', 'true');
+                core.setOutput('run_id', lastSuccessfulRun.id);
+                core.setOutput('artifact_id', modelsArtifact.id);
+                return;
+              }
             }
+            
+            console.log('⚠️ No models artifact found. Forcing a retrain.');
+            core.setOutput('artifact_exists', 'false');
 
       - name: Download latest model artifact
-        if: steps.check_artifact.outputs.artifact_exists == 'true'
+        if: steps.get_artifact_info.outputs.artifact_exists == 'true'
         uses: actions/download-artifact@v4
         with:
+          run-id: ${{ steps.get_artifact_info.outputs.run_id }}
           name: models
           path: models
 
-      - name: Monitor model performance
+      - name: Monitor model performance and decide retrain
         id: monitor_step
-        if: steps.check_artifact.outputs.artifact_exists == 'true'
+        if: steps.get_artifact_info.outputs.artifact_exists == 'true'
         run: |
-          # GITHUB_OUTPUT에 재학습 필요 여부 변수를 저장
           retrain_output=$(python src/model_monitor.py)
           echo "$retrain_output" >> $GITHUB_OUTPUT
-      
-      - name: Check for initial build
-        if: steps.check_artifact.outputs.artifact_exists == 'false'
-        id: initial_build
-        run: |
-          echo "retrain_needed=true" >> $GITHUB_OUTPUT
 
       - name: Retrain and Deploy if needed
-        if: steps.monitor_step.outputs.retrain_needed == 'true' || steps.initial_build.outputs.retrain_needed == 'true'
+        id: final_retrain_check
         run: |
-          echo "🔥 재학습 및 배포를 위한 CI/CD 워크플로우를 트리거합니다."
-          # 이 부분에서 main_ci_cd.yml 워크플로우를 재실행하거나, 
-          # ci, deploy 작업을 직접 수행하는 스크립트를 추가할 수 있습니다.
-          # 예: github cli 사용
-          # gh workflow run main_ci_cd.yml
+          if [ "${{ steps.get_artifact_info.outputs.artifact_exists }}" == "false" ]; then
+            echo "retrain_needed=true" >> $GITHUB_OUTPUT
+            echo "🔥 최초 실행입니다. 재학습 및 배포를 위한 CI/CD 워크플로우를 트리거합니다."
+          elif [ "${{ steps.monitor_step.outputs.retrain_needed }}" == "true" ]; then
+            echo "retrain_needed=true" >> $GITHUB_OUTPUT
+            echo "🔥 모델 성능이 저하되어 재학습 및 배포를 위한 CI/CD 워크플로우를 트리거합니다."
+          else
+            echo "retrain_needed=false" >> $GITHUB_OUTPUT
+            echo "✨ 모니터링 완료. 재학습은 필요 없습니다."
+          fi
+      
+      - name: Trigger CI/CD workflow
+        if: steps.final_retrain_check.outputs.retrain_needed == 'true'
+        run: |
+          echo "Triggering main_ci_cd.yml workflow..."
+          # 실제로는 다른 워크플로우를 호출하거나, 재학습/배포 스크립트를 여기에 직접 작성
+          # 예시: GitHub CLI를 사용하여 main_ci_cd.yml 워크플로우 호출
+          # gh workflow run main_ci_cd.yml --ref main
