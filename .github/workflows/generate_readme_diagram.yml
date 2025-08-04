@@ -17,32 +17,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Node.js environment
-        uses: actions/setup-node@v3
+      - name: Generate Mermaid SVG
+        uses: neco-actions/markdown-mermaid-action@v1.1.0
         with:
-          node-version: '20'
-      
-      - name: Install mermaid-cli
-        run: npm install -g @mermaid-js/mermaid-cli
-
-      - name: Extract Mermaid diagram from README
-        id: extract_diagram
-        run: |
-          sed -n '/```mermaid/,/```/p' README.md | sed '1d;$d' > architecture.mmd
-      
-      - name: Create docs directory if not exists
-        run: |
-          mkdir -p docs/images
-
-      - name: Generate SVG from Mermaid code
-        env:
-          MMDC_PUPPETEER_CONFIG: '{"args": ["--no-sandbox"]}'
-        run: mmdc -i architecture.mmd -o docs/images/architecture.svg -t neutral
-
-      - name: Commit generated image
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add docs/images/architecture.svg
-          git commit -m "chore: add/update generated architecture diagram" || echo "No changes to commit"
-# test
+          input-file: README.md
+          output-file: docs/images/architecture.svg
