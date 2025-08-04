@@ -17,18 +17,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Extract and clean Mermaid diagram from README
-        id: extract_diagram
+      - name: Extract and clean Mermaid diagram
+        id: extract_and_clean
         run: |
           sed -n '/```mermaid/,/```/p' README.md | sed '1d;$d' > architecture.mmd
-          # Remove non-breaking spaces and other special characters
-          sed -i 's/[[:cntrl:]]//g; s/ / /g' architecture.mmd
+          # Remove non-breaking spaces
+          sed -i 's/ / /g' architecture.mmd
       
       - name: Create docs directory if not exists
         run: |
           mkdir -p docs/images
 
-      - name: Generate SVG from Mermaid code
+      - name: Generate SVG from cleaned Mermaid file
         uses: docker://minlag/mermaid-cli
         with:
           args: -i architecture.mmd -o docs/images/architecture.svg
