@@ -1,10 +1,23 @@
 # **스팸 이메일 분류기 MLOps 파이프라인 구축**  
 이 프로젝트는 스팸 이메일 분류 모델을 개발하고, 이를 프로덕션 환경에 배포하기 위한 완전 자동화된 MLOps(Machine Learning Operations) 파이프라인을 구축하는 것을 목표로 합니다. 데이터 모니터링부터 모델 재학습, 배포까지 전 과정을 자동화하여, 모델 성능을 지속적으로 관리하고 서비스의 안정성을 보장합니다.
 
-# test16
+# 프로젝트 상태 요약
+
+✅ 데이터 수집: data_ingestion.py를 통한 신규 데이터 샘플링 자동화 완료.
+
+✅ 모델 모니터링: model_monitor.py를 통한 데이터 드리프트 및 성능 저하 감지 로직 구현 완료.
+
+✅ 모델 재학습: 성능 저하 감지 시 GitHub Actions를 통한 모델 재학습 파이프라인 자동화 완료.
+
+✅ MLflow 연동: 모델 학습 실험 추적 및 최고 성능 모델을 통한 조건부 배포 로직 구현 완료.
+
+✅ Docker 컨테이너화: FastAPI 기반 API를 Docker 이미지로 빌드 및 배포 준비 완료.
+
+🚧 API 배포: Docker Hub 푸시까지는 구현 완료. 실제 운영 환경 배포(예: AWS, GCP) 연동이 필요.
+
 
 - **프로젝트 기간:** 2025.07.28 ~ 2025.08.08  
-- **배포 링크:** 서비스 바로가기 (Docker Hub 링크)
+- **배포 링크:** 서비스 바로가기 ([Docker Hub 링크](https://hub.docker.com/repository/docker/rladud9689/mlops-spam-classifier))
 ---
 
 ## **1. 서비스 구성 요소**  
@@ -22,17 +35,31 @@
 - 컨테이너화: 모델을 Docker 이미지로 패키징하여 재현 가능한 배포 환경 구축
 
 ### **1.2 파이프라인 사용자 흐름**  
-- 이 프로젝트는 사람의 개입 없이 아래와 같은 MLOps 파이프라인이 자동 실행됩니다.
+- 이 프로젝트는 사람의 개입 없이 GitHub Actions를 통해 아래와 같은 MLOps 파이프라인이 자동으로 실행됩니다.
 
-1. 데이터 수집: 대규모 데이터셋에서 정기적으로 새로운 데이터 샘플을 가져와 기존 데이터에 추가합니다.
+### Monitor 잡 실행:
 
-2. 모니터링: model_monitor.py가 데이터의 통계적 변화를 감지하고, 재학습이 필요하면 retrain_needed 변수를 true로 설정합니다.
+트리거: 메인 브랜치에 push가 발생하거나, 매일 자정에 자동으로 실행됩니다.
 
-3. CI(지속적 통합): 재학습이 필요한 경우, train_model.py를 실행하여 새로운 데이터로 모델을 재학습하고, MLflow에 기록합니다.
+역할: src/model_monitor.py를 실행하여 새로운 데이터에 대한 모델 성능을 평가하고 데이터 드리프트 여부를 감지합니다.
 
-4. 성능 비교: 재학습된 모델의 성능을 MLflow에 기록된 이전 최고 성능 모델과 비교합니다.
+결과: 재학습이 필요하다고 판단되면 retrain_needed 변수를 true로 설정하고 다음 단계(CI)를 트리거합니다.
 
-5. CD(지속적 배포): 신규 모델의 성능이 더 좋으면 deploy 잡이 실행되어 Docker 이미지를 Docker Hub에 푸시합니다.
+### CI (지속적 통합) 잡 실행:
+
+조건: Monitor 잡의 retrain_needed 변수가 true일 때만 실행됩니다.
+
+역할: src/data_ingestion.py로 새로운 데이터를 가져오고, notebooks/train_model.py로 모델을 재학습합니다. MLflow를 이용해 모델 성능을 추적하고, 기존 최고 성능 모델과 비교합니다.
+
+결과: 새로운 모델의 성능이 기존 모델보다 좋으면 deploy_needed 변수를 true로 설정하고 다음 단계(CD)를 트리거합니다.
+
+### CD (지속적 배포) 잡 실행:
+
+조건: CI 잡의 deploy_needed 변수가 true일 때만 실행됩니다.
+
+역할: Dockerfile을 기반으로 FastAPI 서버와 새로운 모델이 포함된 Docker 이미지를 빌드합니다.
+
+결과: 빌드된 Docker 이미지를 Docker Hub에 푸시하여 배포를 완료합니다.
 ---
 
 ## **2. 활용 장비 및 협업 툴**  
@@ -98,20 +125,19 @@ F1-Score: 정밀도와 재현율의 조화 평균.
 
 ## **5. 사용 기술 스택**  
 ### **5.1 백엔드**  
-- Flask / FastAPI / Django *(필요한 항목 작성)*  
-- 데이터베이스: SQLite / PostgreSQL / MySQL  
+- FastAPI: 스팸 분류 모델을 서빙하는 API 서버 구축
 
 ### **5.2 프론트엔드**  
-- React.js / Next.js / Vue.js *(필요한 항목 작성)*  
+-  
 
 ### **5.3 머신러닝 및 데이터 분석**  
-MLflow: 실험 추적 및 모델 레지스트리
+- MLflow: 실험 추적, 모델 레지스트리 관리
 
-scikit-learn: 모델 학습 및 평가
+- scikit-learn: Multinomial Naive Bayes 모델 학습 및 평가
 
-Pandas: 데이터 처리 및 분석
+- Pandas: 데이터 처리 및 분석
 
-NLTK: 텍스트 전처리 (어간 추출 등)
+- NLTK: 텍스트 전처리 (토큰화, 어간 추출 등)
 
 ### **5.4 배포 및 운영**  
 GitHub Actions: CI/CD 파이프라인 자동화
@@ -119,6 +145,8 @@ GitHub Actions: CI/CD 파이프라인 자동화
 Docker: 모델 컨테이너화 및 배포
 
 Python: 백엔드 스크립트 및 모델 개발 
+
+Git: 소스 코드 및 버전 관리
 
 ---
 
