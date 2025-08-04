@@ -17,15 +17,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Install mermaid-cli
+        run: npm install -g @mermaid-js/mermaid-cli
+
       - name: Extract Mermaid diagram from README
         id: extract_diagram
         run: |
           sed -n '/```mermaid/,/```/p' README.md | sed '1d;$d' > architecture.mmd
+      
+      - name: Create docs directory if not exists
+        run: |
+          mkdir -p docs/images
 
       - name: Generate SVG from Mermaid code
-        uses: docker://ghcr.io/mermaid-js/mermaid-cli:10.8.0
-        with:
-          args: -i architecture.mmd -o docs/images/architecture.svg -t neutral
+        run: mmdc -i architecture.mmd -o docs/images/architecture.svg -t neutral
 
       - name: Commit generated image
         run: |
