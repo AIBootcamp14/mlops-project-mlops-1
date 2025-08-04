@@ -17,17 +17,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Python environment
-        uses: actions/setup-python@v4
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v3
         with:
-          python-version: '3.10'
+          node-version: '20'
       
-      - name: Install Python dependencies
-        run: |
-          pip install mermaid-py
+      - name: Install dependencies
+        run: npm install mermaid
 
-      - name: Run Python script to generate diagram
-        run: python generate_diagram.py
+      - name: Run script to generate diagram
+        run: node generate_diagram.js
 
       - name: Commit generated image
         run: |
