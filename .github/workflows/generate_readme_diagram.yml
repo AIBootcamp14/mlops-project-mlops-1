@@ -20,7 +20,7 @@ jobs:
       - name: Setup Node.js environment
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: '20'
       
       - name: Install mermaid-cli
         run: npm install -g @mermaid-js/mermaid-cli
@@ -35,7 +35,7 @@ jobs:
           mkdir -p docs/images
 
       - name: Generate SVG from Mermaid code
-        run: mmdc -i architecture.mmd -o docs/images/architecture.svg -t neutral
+        run: mmdc --puppeteerConfig.args='["--no-sandbox"]' -i architecture.mmd -o docs/images/architecture.svg -t neutral
 
       - name: Commit generated image
         run: |
