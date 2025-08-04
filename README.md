@@ -81,7 +81,7 @@ graph TD
         G --> H[운영 환경 배포];
     end
 ```
-# test5
+# test6
 
 ![MLOps 파이프라인 구조도](docs/images/architecture.svg)
 
