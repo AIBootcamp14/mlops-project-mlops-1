@@ -41,7 +41,7 @@ def preprocess_text(text):
     words = [stemmer.stem(word) for word in words]
     return ' '.join(words)
 
-# MLflow에서 이전 모델의 최고 성능을 가져오는 함수 추가
+# MLflow에서 이전 모델의 최고 성능을 가져오는 함수
 def get_best_model_performance():
     try:
         # MLflow 실험에서 모든 실행 기록을 가져옴
@@ -62,7 +62,7 @@ def train_model():
     deploy_needed = "true"  # 기본값은 배포 필요로 설정
 
     # MLflow run 시작
-    with mlflow.start_run():
+    with mlflow.start_run() as run:
         # 1. 원본 데이터 로드 (data/spam.csv 파일)
         try:
             df = pd.read_csv('data/spam.csv', encoding='latin-1', sep=',', quotechar='"', on_bad_lines='skip')
@@ -194,8 +194,11 @@ def train_model():
             print(f"벡터라이저 저장 완료: {vectorizer_path}")
             
             # MLflow에 모델 및 벡터라이저 아티팩트로 기록
-            mlflow.sklearn.log_model(model, "spam_classification_model")
+            # MLflow 모델 레지스트리에 모델 등록하는 로직 추가
+            model_name = "SpamClassifier"
+            mlflow.sklearn.log_model(model, "model", registered_model_name=model_name)
             mlflow.log_artifact(vectorizer_path, "tfidf_vectorizer")
+            print(f"모델을 '{model_name}' 레지스트리에 등록했습니다.")
             
         else:
             print("⚠️ 새로운 모델의 성능이 더 낮습니다. 롤백이 필요합니다. 배포를 중단합니다.")
