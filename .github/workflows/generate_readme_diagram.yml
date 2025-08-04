@@ -17,27 +17,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Node.js environment
-        uses: actions/setup-node@v3
+      - name: Setup Python environment
+        uses: actions/setup-python@v4
         with:
-          node-version: '20'
+          python-version: '3.10'
       
-      - name: Install mermaid-cli with D3 renderer
+      - name: Install Python dependencies
         run: |
-          npm install -g @mermaid-js/mermaid-cli
-          npm install -g d3
+          pip install mermaid-py
 
-      - name: Extract Mermaid diagram from README
-        id: extract_diagram
-        run: |
-          sed -n '/```mermaid/,/```/p' README.md | sed '1d;$d' > architecture.mmd
-      
-      - name: Create docs directory if not exists
-        run: |
-          mkdir -p docs/images
-
-      - name: Generate SVG from Mermaid code
-        run: mmdc -i architecture.mmd -o docs/images/architecture.svg -t neutral --renderer d3
+      - name: Run Python script to generate diagram
+        run: python generate_diagram.py
 
       - name: Commit generated image
         run: |
