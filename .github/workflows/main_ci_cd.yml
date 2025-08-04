@@ -36,7 +36,7 @@ jobs:
     outputs:
       deploy_needed: ${{ steps.train.outputs.deploy_needed }}
     env:
-      MLFLOW_TRACKING_URI: .
+      MLFLOW_TRACKING_URI: mlruns
       MLFLOW_TRACKING_TOKEN: ${{ secrets.MLFLOW_TRACKING_TOKEN }}
     steps:
       - name: Checkout code
