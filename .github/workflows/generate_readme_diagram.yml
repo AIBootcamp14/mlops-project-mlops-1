@@ -17,15 +17,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Extract and clean Mermaid diagram from README
+        id: extract_diagram
+        run: |
+          sed -n '/```mermaid/,/```/p' README.md | sed '1d;$d' > architecture.mmd
+          # Remove non-breaking spaces and other special characters
+          sed -i 's/[[:cntrl:]]//g; s/ / /g' architecture.mmd
+      
       - name: Create docs directory if not exists
         run: |
           mkdir -p docs/images
 
-      - name: Generate Mermaid diagram using Docker
-        id: generate_mermaid
+      - name: Generate SVG from Mermaid code
         uses: docker://minlag/mermaid-cli
         with:
-          args: -i README.md -o docs/images/architecture.svg
+          args: -i architecture.mmd -o docs/images/architecture.svg
 
       - name: Commit generated image
         run: |
