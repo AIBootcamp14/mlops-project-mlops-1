@@ -16,12 +16,13 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      
+
       - name: Create docs directory if not exists
         run: |
           mkdir -p docs/images
 
       - name: Generate Mermaid diagram using Docker
+        id: generate_mermaid
         uses: docker://minlag/mermaid-cli
         with:
           args: -i README.md -o docs/images/architecture.svg
