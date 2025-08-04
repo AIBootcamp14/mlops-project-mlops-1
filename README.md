@@ -69,6 +69,7 @@ F1-Score: 정밀도와 재현율의 조화 평균.
 ### **4.1 시스템 구조도**  
 아래는 프로젝트의 전체적인 파이프라인을 나타내는 구조도입니다. 
 
+```mermaid
 graph TD
     A[데이터 수집 (data_ingestion.py)] --> B[모델 모니터링 (model_monitor.py)];
     B --> C[MLflow CI/CD 파이프라인];
@@ -79,7 +80,7 @@ graph TD
         E --> G[Docker Hub 푸시];
         G --> H[운영 환경 배포];
     end
-
+```
 
 
 ![MLOps 파이프라인 구조도](docs/images/architecture.svg)
