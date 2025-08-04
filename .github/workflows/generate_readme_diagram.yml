@@ -1,0 +1,27 @@
+name: Generate README Diagram
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'README.md'
+
+jobs:
+  generate-diagram:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Generate and commit Mermaid diagram
+        id: generate-diagram
+        uses: jojo-l/markdown-mermaid-image-action@v1
+        with:
+          input_path: README.md
+          output_path: docs/images/architecture.svg
+          commit_message: "chore: auto-generate architecture diagram from README.md"
+          
+      - name: Verify diagram generation
+        run: ls -R docs/images/
+
