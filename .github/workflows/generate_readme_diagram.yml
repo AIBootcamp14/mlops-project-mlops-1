@@ -17,27 +17,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Node.js environment
-        uses: actions/setup-node@v3
+      - name: Generate Mermaid diagram using Docker
+        uses: docker://minlag/mermaid-cli
         with:
-          node-version: '20'
-      
-      - name: Install mermaid-cli with a stable renderer
-        run: |
-          npm install -g @mermaid-js/mermaid-cli
-          npm uninstall -g puppeteer
-
-      - name: Extract Mermaid diagram from README
-        id: extract_diagram
-        run: |
-          sed -n '/```mermaid/,/```/p' README.md | sed '1d;$d' > architecture.mmd
-      
-      - name: Create docs directory if not exists
-        run: |
-          mkdir -p docs/images
-
-      - name: Generate SVG from Mermaid code
-        run: mmdc -i architecture.mmd -o docs/images/architecture.svg
+          args: -i README.md -o docs/images/architecture.svg
 
       - name: Commit generated image
         run: |
