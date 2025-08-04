@@ -10,18 +10,24 @@ on:
 jobs:
   generate-diagram:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Generate and commit Mermaid diagram
-        id: generate-diagram
-        uses: jojo-l/markdown-mermaid-image-action@v1
+        uses: yuzutech/markdown-mermaid-action@v1.2.0
         with:
-          input_path: README.md
-          output_path: docs/images/architecture.svg
-          commit_message: "chore: auto-generate architecture diagram from README.md"
-          
-      - name: Verify diagram generation
-        run: ls -R docs/images/
+          mermaid_path: 'README.md'
+          output_path: 'docs/images/architecture.svg'
+          output_format: 'svg'
+
+      - name: Commit files
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add docs/images/architecture.svg
+          git commit -m "chore: add/update generated architecture diagram" || echo "No changes to commit"
 
