@@ -14,11 +14,13 @@ jobs:
       contents: write
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Generate Mermaid SVG
-        uses: neco-actions/markdown-mermaid-action@v1.1.0
+      - name: Generate and commit Mermaid diagram
+        uses: tool3210/mermaid-action@v1.0.0
         with:
-          input-file: README.md
-          output-file: docs/images/architecture.svg
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          input_file: README.md
+          output_path: docs/images/
+          output_name: architecture.svg
