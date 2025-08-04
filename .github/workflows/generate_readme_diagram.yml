@@ -35,7 +35,7 @@ jobs:
           mkdir -p docs/images
 
       - name: Generate SVG from Mermaid code
-        run: mmdc -i architecture.mmd -o docs/images/architecture.svg -t neutral --no-sandbox
+        run: mmdc -i architecture.mmd -o docs/images/architecture.svg -t neutral --puppeteer-args="--no-sandbox"
 
       - name: Commit generated image
         run: |
@@ -43,4 +43,3 @@ jobs:
           git config --local user.name "GitHub Action"
           git add docs/images/architecture.svg
           git commit -m "chore: add/update generated architecture diagram" || echo "No changes to commit"
-
