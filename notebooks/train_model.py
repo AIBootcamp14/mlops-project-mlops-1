@@ -41,11 +41,11 @@ def preprocess_text(text):
     words = [stemmer.stem(word) for word in words]
     return ' '.join(words)
 
-# MLflow에서 이전 모델의 최고 성능을 가져오는 함수
-def get_best_model_performance():
+# MLflow에서 이전 모델의 최고 성능을 가져오는 함수 (수정됨)
+def get_best_model_performance(experiment_id):
     try:
         # MLflow 실험에서 모든 실행 기록을 가져옴
-        runs = mlflow.search_runs(order_by=["metrics.accuracy DESC"])
+        runs = mlflow.search_runs(experiment_ids=[experiment_id], order_by=["metrics.accuracy DESC"])
         if not runs.empty:
             # 가장 높은 정확도를 가진 실행의 정보를 반환
             best_run = runs.iloc[0]
@@ -60,9 +60,18 @@ def get_best_model_performance():
 def train_model():
     print("모델 학습을 시작합니다.")
     deploy_needed = "true"  # 기본값은 배포 필요로 설정
+    experiment_name = "SpamClassifierExperiment"
 
+    # MLflow 실험이 이미 있는지 확인하고 없으면 새로 생성 (수정됨)
+    try:
+        experiment_id = mlflow.get_experiment_by_name(experiment_name).experiment_id
+        print(f"✅ 기존 '{experiment_name}' 실험을 사용합니다.")
+    except AttributeError:
+        experiment_id = mlflow.create_experiment(experiment_name)
+        print(f"✨ 새로운 '{experiment_name}' 실험을 생성했습니다.")
+    
     # MLflow run 시작
-    with mlflow.start_run() as run:
+    with mlflow.start_run(experiment_id=experiment_id) as run:
         # 1. 원본 데이터 로드 (data/spam.csv 파일)
         try:
             df = pd.read_csv('data/spam.csv', encoding='latin-1', sep=',', quotechar='"', on_bad_lines='skip')
@@ -180,7 +189,7 @@ def train_model():
         mlflow.log_metric("f1_score", f1)
 
         # 8. 모델 성능 비교 및 배포 결정 (새로운 기능)
-        best_accuracy = get_best_model_performance()
+        best_accuracy = get_best_model_performance(experiment_id)
         if accuracy >= best_accuracy:
             print("✨ 새로운 모델의 성능이 더 좋습니다. 배포를 진행합니다.")
             
