@@ -45,3 +45,4 @@ jobs:
           git config --local user.name "GitHub Action"
           git add docs/images/architecture.svg
           git commit -m "chore: add/update generated architecture diagram" || echo "No changes to commit"
+# test
