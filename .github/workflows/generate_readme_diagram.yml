@@ -35,7 +35,9 @@ jobs:
           mkdir -p docs/images
 
       - name: Generate SVG from Mermaid code
-        run: mmdc -i architecture.mmd -o docs/images/architecture.svg -t neutral --puppeteer-args="--no-sandbox"
+        env:
+          MMDC_PUPPETEER_CONFIG: '{"args": ["--no-sandbox"]}'
+        run: mmdc -i architecture.mmd -o docs/images/architecture.svg -t neutral
 
       - name: Commit generated image
         run: |
