@@ -35,6 +35,9 @@ jobs:
     if: needs.monitor.outputs.retrain_needed == 'true'
     outputs:
       deploy_needed: ${{ steps.train.outputs.deploy_needed }}
+    env:
+      MLFLOW_TRACKING_URI: .
+      MLFLOW_TRACKING_TOKEN: ${{ secrets.MLFLOW_TRACKING_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
