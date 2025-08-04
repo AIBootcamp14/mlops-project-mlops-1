@@ -1,5 +1,7 @@
+# GitHub Actions 워크플로우를 정의합니다.
 name: Generate README Diagram
 
+# 워크플로우가 언제 실행될지 설정합니다.
 on:
   push:
     branches:
@@ -7,32 +9,41 @@ on:
     paths:
       - 'README.md'
 
+# 실행할 작업을 정의합니다.
 jobs:
   generate-diagram:
+    # 이 작업은 최신 버전의 우분투에서 실행됩니다.
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
+    # 작업의 각 단계를 정의합니다.
     steps:
       - name: Checkout code
+        # 'checkout' 액션을 사용하여 리포지토리 코드를 가져옵니다.
         uses: actions/checkout@v3
 
       - name: Extract and clean Mermaid diagram
         id: extract_and_clean
         run: |
+          # README.md에서 '```mermaid'와 '```' 사이의 코드를 추출하여 임시 파일(architecture.mmd)에 저장합니다.
           sed -n '/```mermaid/,/```/p' README.md | sed '1d;$d' > architecture.mmd
+          # 추출된 코드에서 특수 공백 문자('\xC2\xA0')를 일반 공백(' ')으로 교체합니다.
           sed -i 's/\xC2\xA0/ /g' architecture.mmd
       
       - name: Create docs directory if not exists
+        # 'docs/images' 디렉토리가 없으면 생성합니다.
         run: |
           mkdir -p docs/images
 
       - name: Generate SVG from cleaned Mermaid file
+        # 'mermaid-cli' 도커 이미지를 사용하여 .mmd 파일에서 SVG 이미지를 생성합니다.
         uses: docker://minlag/mermaid-cli
         with:
           args: -i architecture.mmd -o docs/images/architecture.svg
 
       - name: Commit generated image
+        # 생성된 SVG 파일을 커밋합니다.
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
