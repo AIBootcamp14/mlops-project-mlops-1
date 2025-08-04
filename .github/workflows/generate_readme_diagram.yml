@@ -12,22 +12,25 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Generate and commit Mermaid diagram
-        uses: yuzutech/markdown-mermaid-action@v1.2.0
-        with:
-          mermaid_path: 'README.md'
-          output_path: 'docs/images/architecture.svg'
-          output_format: 'svg'
+      - name: Extract Mermaid diagram from README
+        id: extract_diagram
+        run: |
+          sed -n '/```mermaid/,/```/p' README.md | sed '1d;$d' > architecture.mmd
 
-      - name: Commit files
+      - name: Generate SVG from Mermaid code
+        uses: docker://ghcr.io/mermaid-js/mermaid-cli:10.8.0
+        with:
+          args: -i architecture.mmd -o docs/images/architecture.svg -t neutral
+
+      - name: Commit generated image
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add docs/images/architecture.svg
           git commit -m "chore: add/update generated architecture diagram" || echo "No changes to commit"
-# test
+
