@@ -81,9 +81,7 @@ F1-Score: 정밀도와 재현율의 조화 평균.
             G --> H["운영 환경 배포"]
         end
 ```
-# test7
 
-![MLOps 파이프라인 구조도](docs/images/architecture.svg)
 
 ### **4.2 데이터 흐름도**  
 1. 데이터 수집: src/data_ingestion.py가 대규모 데이터셋(data/full_spam_dataset.csv)에서 새로운 데이터 100개를 샘플링하여 data/new_data/new_spam_data.csv에 저장합니다.
