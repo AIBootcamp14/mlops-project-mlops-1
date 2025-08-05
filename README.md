@@ -261,24 +261,12 @@ AWS EC2: 최종적으로 Docker 컨테이너를 배포하고 실행하는 클라
 
 ## **5. 팀원 소개**  
 
-| 이름      | 역할              | GitHub                               |                                 |
-|----------|------------------|-------------------------------------|-----------------------------------------|
-| **김시진** | 팀장 환경 및 서버 구축 | [https://github.com/kimsijin33]             |              |
-| **김영** | 파이프라인 구축  | [https://github.com/kimyoung9689]             |              |
-| **정예은** | 파이프라인 구축    | [https://github.com/wjddpdms03]             |          |
-| **전수정** | 전처리,모델개발    | [https://github.com/pochacco0603]             |    |
-
-
 | 이름 | 역할 | GitHub |
 |---|---|---|
 | 김시진 | 팀장 환경 및 서버 구축 | [https://github.com/kimsijin33] |
 | 김영 | 파이프라인 구축 | [https://github.com/kimyoung9689] |
 | 정예은 | 파이프라인 구축 | [https://github.com/wjddpdms03] |
 | 전수정 | 전처리,모델개발 | [https://github.com/pochacco0603] |
-
-
-
-
 
 
 ---
