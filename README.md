@@ -174,6 +174,7 @@ Docker Compose: 복잡한 컨테이너 실행 명령어를 docker-compose.yml �
 - **구조 및 설명:** *텍스트 분류에 효과적인 확률 기반의 모델입니다. 대용량 텍스트 데이터를 효율적으로 처리하며, TfidfVectorizer를 사용하여 텍스트 데이터를 벡터화한 후 학습을 진행합니다.*  
 - **학습 데이터:** *Kaggle의 Spam Text Message Classification 데이터셋을 활용하여 시뮬레이션했습니다.*  
 - **평가 지표:** *모델의 예측 성능을 평가하기 위해 다음 지표들을 사용했습니다.*  
+
 정확도(Accuracy): 전체 예측 중 올바르게 예측한 비율.
 
 정밀도(Precision): 스팸으로 예측한 것 중 실제 스팸의 비율.
@@ -266,6 +267,19 @@ AWS EC2: 최종적으로 Docker 컨테이너를 배포하고 실행하는 클라
 | **김영** | 파이프라인 구축  | [https://github.com/kimyoung9689]             |              |
 | **정예은** | 파이프라인 구축    | [https://github.com/wjddpdms03]             |          |
 | **전수정** | 전처리,모델개발    | [https://github.com/pochacco0603]             |    |
+
+
+| 이름 | 역할 | GitHub |
+|---|---|---|
+| 김시진 | 팀장 환경 및 서버 구축 | [https://github.com/kimsijin33] |
+| 김영 | 파이프라인 구축 | [https://github.com/kimyoung9689] |
+| 정예은 | 파이프라인 구축 | [https://github.com/wjddpdms03] |
+| 전수정 | 전처리,모델개발 | [https://github.com/pochacco0603] |
+
+
+
+
+
 
 ---
 
