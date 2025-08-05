@@ -6,6 +6,35 @@
 - **배포 링크:** 서비스 바로가기 ([Docker Hub 링크](https://hub.docker.com/repository/docker/rladud9689/mlops-spam-classifier))
 ---
 
+## **4. 서비스 아키텍처**  
+### **4.1 시스템 구조도**  
+아래는 프로젝트의 전체적인 파이프라인을 나타내는 구조도입니다. 
+
+```mermaid
+    graph TD
+        A["데이터 수집 (data_ingestion.py)"] --> B["모델 모니터링 (model_monitor.py)"]
+        B --> C["MLflow CI/CD 파이프라인"]
+        subgraph "CI/CD Pipeline"
+            C --> D["모델 학습 및 평가 (train_model.py)"]
+            D -- "최고 성능 달성" --> E["Docker 이미지 빌드"]
+            D -- "성능 미달" --> F["배포 중단"]
+            E --> G["Docker Hub 푸시"]
+            G -- "푸시 성공" --> H["AWS EC2 배포"]
+        end
+```
+
+
+### **4.2 데이터 흐름도**  
+1. 데이터 수집: src/data_ingestion.py가 대규모 데이터셋(data/full_spam_dataset.csv)에서 새로운 데이터 100개를 샘플링하여 data/new_data/new_spam_data.csv에 저장합니다.
+
+2. 데이터 처리: notebooks/train_model.py가 원본 데이터와 새로 수집된 데이터를 합친 후, 텍스트 전처리 및 TF-IDF 벡터화를 수행합니다.
+
+3. 모델 학습: 처리된 데이터를 바탕으로 Multinomial Naive Bayes 모델을 학습합니다.
+
+4. 모델 저장: 학습된 모델과 TfidfVectorizer는 models/ 디렉토리에 .joblib 파일로 저장됩니다.
+
+5. 모델 서빙: API 서버(api/main.py)가 저장된 모델 파일을 로드하여 실시간 스팸 분류 예측에 사용합니다.
+
 
 # 프로젝트 설명 간단 요약
 
