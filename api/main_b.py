@@ -5,7 +5,6 @@ from nltk.stem import PorterStemmer
 import os
 from fastapi import FastAPI
 from pydantic import BaseModel
-from fastapi.middleware.cors import CORSMiddleware
 
 # NLTK 데이터 다운로드 (도커 이미지 빌드 단계에서 이미 실행되지만, 안전을 위해 추가)
 try:
@@ -35,19 +34,6 @@ def preprocess_text(text):
 
 # FastAPI 앱 인스턴스 생성
 app = FastAPI()
-
-#CORS 스팸 분류기 웹앱 주소 추가
-origins = [
-        "http://my-spam-class.s3-website.ap-northeast-2.amazonaws.com",
-        ]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,  # 허용할 origin 목록 지정
-    allow_credentials=True,  # 자격 증명(쿠키, 인증 헤더 등) 허용 여부
-    allow_methods=["*"],  # 허용할 HTTP 메서드 (모두 허용)
-    allow_headers=["*"],  # 허용할 HTTP 헤더 (모두 허용)
-)
 
 # 모델과 벡터라이저를 로드하는 함수
 # 스크립트의 현재 위치(__file__)를 기준으로 상대 경로를 설정
